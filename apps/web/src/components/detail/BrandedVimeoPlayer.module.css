@@ -1,0 +1,130 @@
+.player {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0d0d0e;
+  color: white;
+  isolation: isolate;
+}
+
+.vimeo,
+.vimeo iframe { width: 100%; height: 100%; }
+.vimeo iframe { position: absolute; inset: 0; border: 0; }
+
+.player::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: linear-gradient(180deg, rgb(0 0 0 / 30%), transparent 28%, transparent 55%, rgb(0 0 0 / 80%));
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+
+.controlsVisible::after { opacity: 1; }
+
+.brand {
+  position: absolute;
+  z-index: 2;
+  top: clamp(15px, 3vw, 28px);
+  left: clamp(16px, 3vw, 30px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--detail-body-font), sans-serif;
+  font-size: clamp(.68rem, 1.5vw, .82rem);
+  font-weight: 800;
+  letter-spacing: .09em;
+  opacity: 0;
+  text-transform: uppercase;
+  transform: translateY(-5px);
+  transition: opacity 180ms ease, transform 220ms ease;
+}
+
+.controlsVisible .brand { opacity: .88; transform: translateY(0); }
+.brandMark { display: grid; width: 30px; height: 30px; place-items: center; border: 1px solid rgb(255 255 255 / 50%); border-radius: 50%; background: color-mix(in srgb, var(--detail-accent) 82%, black); font-size: .62rem; letter-spacing: -.02em; box-shadow: 0 6px 18px rgb(0 0 0 / 22%); }
+
+.centerPlay {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: clamp(62px, 9vw, 84px);
+  height: clamp(62px, 9vw, 84px);
+  place-items: center;
+  transform: translate(-50%, -50%) scale(.88);
+  border: 1px solid rgb(255 255 255 / 72%);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--detail-accent) 88%, black);
+  box-shadow: 0 15px 45px rgb(0 0 0 / 35%);
+  color: white;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 180ms ease, transform 240ms cubic-bezier(.22, 1, .36, 1), background 180ms ease;
+}
+
+.centerPlay svg { width: 42%; }
+.controlsVisible .centerPlay { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.centerPlay:hover { background: color-mix(in srgb, var(--detail-accent) 76%, white); }
+
+.controls {
+  position: absolute;
+  z-index: 4;
+  right: clamp(14px, 2.7vw, 28px);
+  bottom: clamp(13px, 2.6vw, 25px);
+  left: clamp(14px, 2.7vw, 28px);
+  opacity: 0;
+  transform: translateY(7px);
+  transition: opacity 180ms ease, transform 220ms ease;
+}
+
+.controlsVisible .controls,
+.player:focus-within .controls { opacity: 1; transform: translateY(0); }
+
+.timelineWrap { position: relative; height: 18px; }
+.timelineWrap::before, .buffered, .elapsed { position: absolute; top: 8px; left: 0; height: 3px; border-radius: 2px; pointer-events: none; }
+.timelineWrap::before { right: 0; background: rgb(255 255 255 / 24%); content: ""; }
+.buffered { background: rgb(255 255 255 / 38%); }
+.elapsed { background: var(--detail-accent); box-shadow: 0 0 12px color-mix(in srgb, var(--detail-accent) 65%, transparent); }
+
+.timeline { position: absolute; inset: 0; width: 100%; height: 18px; margin: 0; appearance: none; background: transparent; cursor: pointer; }
+.timeline::-webkit-slider-runnable-track { height: 3px; background: transparent; }
+.timeline::-webkit-slider-thumb { width: 13px; height: 13px; margin-top: -5px; appearance: none; border: 2px solid white; border-radius: 50%; background: var(--detail-accent); box-shadow: 0 2px 8px rgb(0 0 0 / 35%); }
+.timeline::-moz-range-track { height: 3px; background: transparent; }
+.timeline::-moz-range-thumb { width: 10px; height: 10px; border: 2px solid white; border-radius: 50%; background: var(--detail-accent); }
+
+.controlRow { display: flex; height: 34px; align-items: center; gap: clamp(2px, .7vw, 8px); }
+.controlRow button { display: grid; width: 34px; height: 34px; flex: 0 0 auto; place-items: center; padding: 0; border: 0; border-radius: 50%; background: transparent; color: white; cursor: pointer; transition: background 160ms ease, color 160ms ease, transform 160ms ease; }
+.controlRow button:hover, .controlRow button:focus-visible { background: rgb(255 255 255 / 16%); outline: none; transform: scale(1.05); }
+.controlRow button svg { width: 21px; height: 21px; }
+.controlRow button.active { background: var(--detail-accent); }
+.controlRow .textButton { width: auto; min-width: 34px; padding: 0 6px; font: 800 .72rem/1 var(--detail-body-font), sans-serif; }
+.spacer { flex: 1; }
+.time { margin-left: 2px; font: 700 clamp(.68rem, 1.6vw, .78rem)/1 var(--detail-body-font), sans-serif; letter-spacing: .015em; white-space: nowrap; text-shadow: 0 1px 5px black; }
+.time i { padding: 0 2px; font-style: normal; opacity: .48; }
+.volume { width: clamp(45px, 8vw, 74px); height: 3px; appearance: none; border-radius: 3px; background: rgb(255 255 255 / 36%); accent-color: var(--detail-accent); cursor: pointer; }
+.volume::-webkit-slider-thumb { width: 11px; height: 11px; appearance: none; border: 1px solid white; border-radius: 50%; background: var(--detail-accent); }
+.volume::-moz-range-thumb { width: 9px; height: 9px; border: 1px solid white; border-radius: 50%; background: var(--detail-accent); }
+
+.loader { position: absolute; z-index: 5; top: 50%; left: 50%; width: 32px; height: 32px; transform: translate(-50%, -50%); border: 3px solid rgb(255 255 255 / 26%); border-top-color: var(--detail-accent); border-radius: 50%; animation: vimeo-spin 800ms linear infinite; }
+.error { position: absolute; z-index: 5; inset: 0; display: grid; place-items: center; padding: 28px; background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--detail-accent) 42%, #171717), #171717 72%); text-align: center; }
+.error p { max-width: 490px; margin: 0; font: 700 clamp(.9rem, 2vw, 1.05rem)/1.45 var(--detail-body-font), sans-serif; }
+
+.player:fullscreen { border-radius: 0; }
+.player:fullscreen .controls { right: 4vw; bottom: 3.5vw; left: 4vw; }
+
+@keyframes vimeo-spin { to { transform: translate(-50%, -50%) rotate(1turn); } }
+
+@media (max-width: 600px) {
+  .brand span:last-child, .volume, .time { display: none; }
+  .centerPlay { width: 58px; height: 58px; }
+  .controls { right: 12px; bottom: 10px; left: 12px; }
+  .controlRow { gap: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .player *, .player::after { transition-duration: 0s !important; }
+}

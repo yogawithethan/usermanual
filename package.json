@@ -1,23 +1,20 @@
 {
-  "name": "um",
+  "name": "islands",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.0.0",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
-  },
-  "dependencies": {
-    "next": "16.2.4",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
-  },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "dev": "corepack pnpm --filter @islands/web dev",
+    "dev:mobile": "corepack pnpm --filter @islands/mobile start",
+    "export:mobile:ios": "corepack pnpm --filter @islands/mobile export:ios",
+    "build": "corepack pnpm --filter @islands/web build",
+    "db:push": "supabase db push",
+    "db:types": "supabase gen types typescript --project-id swtsqngrkkhggjacfhft > packages/db/src/database.types.ts",
+    "smoke:um": "node scripts/smoke-user-manual.mjs",
+    "smoke:um:details": "node scripts/smoke-user-manual-details.mjs",
+    "smoke:um:mobile-local": "USER_MANUAL_BASE_URL=http://localhost:3000 USER_MANUAL_CHECK_MOBILE_REFRESH=1 USER_MANUAL_CHECK_MOBILE_CHECKOUT_RETURN=1 node scripts/smoke-user-manual.mjs",
+    "start": "corepack pnpm --filter @islands/web start",
+    "typecheck": "corepack pnpm --filter @islands/web typecheck",
+    "typecheck:mobile": "corepack pnpm --filter @islands/mobile typecheck"
   }
 }

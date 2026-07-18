@@ -1,0 +1,35 @@
+{
+  "name": "@islands/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "android": "expo start --android",
+    "export:ios": "expo export --platform ios --output-dir ../../.tmp/mobile-export-ios",
+    "ios": "expo start --ios",
+    "start": "expo start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@expo-google-fonts/alegreya-sans": "^0.4.1",
+    "@expo-google-fonts/amaranth": "^0.4.1",
+    "@expo-google-fonts/lexend-deca": "^0.4.1",
+    "@expo-google-fonts/lexend-exa": "^0.4.2",
+    "@expo-google-fonts/lobster": "^0.4.1",
+    "@expo-google-fonts/quicksand": "^0.4.1",
+    "@react-native-async-storage/async-storage": "^2.2.0",
+    "expo": "^55.0.23",
+    "expo-constants": "^55.0.16",
+    "expo-crypto": "^55.0.14",
+    "expo-font": "^55.0.7",
+    "expo-image-picker": "^55.0.20",
+    "expo-router": "^55.0.14",
+    "expo-secure-store": "^55.0.13",
+    "expo-video": "^55.0.16",
+    "expo-web-browser": "^55.0.15",
+    "lucide-react-native": "^1.14.0",
+    "react": "19.2.0",
+    "react-native": "^0.83.6",
+    "react-native-svg": "^15.15.3"
+  }
+}
