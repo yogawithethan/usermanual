@@ -1,0 +1,29 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+import {
+  SettingsLauncher,
+} from "@/components/settings/SettingsPanel";
+import type { IslandsInfo } from "@/components/settings/IslandsWordmark";
+
+const islandsInfo: IslandsInfo = {
+  label: "powered by",
+  intro: "Islands is a new way to access all of Ethan's apps —",
+  apps: [
+    "Yoga with Ethan",
+    "The Course of Transformation",
+    "The User Manual",
+    "Tea & Timeline Shifts",
+  ],
+  outro: "— as well as other creators' projects (coming soon).",
+  signInHint:
+    "If you've signed up for any of them, sign in here with the same email — you don't need a new account. If not, the one you create here opens the door to the rest.",
+  footer: "No ads. No data resale.",
+};
+
+export function SettingsRoot() {
+  const pathname = usePathname();
+  const isDetailPage = /^\/(levels|universes)\//.test(pathname);
+
+  return <SettingsLauncher islandsInfo={islandsInfo} showLauncher={!isDetailPage} />;
+}
