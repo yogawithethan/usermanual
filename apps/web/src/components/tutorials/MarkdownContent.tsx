@@ -1,75 +1,20 @@
 import type { ReactNode } from "react";
 
+import { renderMarkdownInline, type MarkdownFootnote } from "./MarkdownInline";
+import { TutorialChecklist, type TutorialChecklistItem } from "./TutorialChecklist";
+import styles from "./MarkdownContent.module.css";
+
 interface MarkdownContentProps {
   blockClassName?: string;
   blocks: string[];
+  footnotes?: MarkdownFootnote[];
   imageClassName?: string;
 }
 
-function splitInline(text: string): ReactNode[] {
-  const pattern = /(!\[[^\]]*\]\([^)]+\)|\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*|__[^_]+__|\*[^*]+\*|_[^_]+_|\[\^[^\]]+\])/g;
-  const nodes: ReactNode[] = [];
-  let cursor = 0;
-  let match: RegExpExecArray | null;
-
-  while ((match = pattern.exec(text))) {
-    if (match.index > cursor) {
-      nodes.push(text.slice(cursor, match.index));
-    }
-
-    const token = match[0];
-    const key = `${match.index}-${token}`;
-    const imageMatch = token.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
-    const linkMatch = token.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-    const footnoteMatch = token.match(/^\[\^([^\]]+)\]$/);
-
-    if (imageMatch) {
-      nodes.push(
-        <img
-          alt={imageMatch[1]}
-          className="shape-frame my-5 w-full object-cover shadow-[0_14px_34px_rgba(12,19,45,0.10)]"
-          key={key}
-          src={imageMatch[2]}
-        />,
-      );
-    } else if (linkMatch) {
-      nodes.push(
-        <a
-          className="font-bold underline decoration-current/35 underline-offset-4"
-          href={linkMatch[2]}
-          key={key}
-          rel="noreferrer"
-          target={linkMatch[2].startsWith("/") || linkMatch[2].startsWith("#") ? undefined : "_blank"}
-        >
-          {splitInline(linkMatch[1])}
-        </a>,
-      );
-    } else if (token.startsWith("**") || token.startsWith("__")) {
-      nodes.push(<strong key={key}>{splitInline(token.slice(2, -2))}</strong>);
-    } else if (token.startsWith("*") || token.startsWith("_")) {
-      nodes.push(<em key={key}>{splitInline(token.slice(1, -1))}</em>);
-    } else if (footnoteMatch) {
-      nodes.push(
-        <sup className="font-bold" key={key}>
-          {footnoteMatch[1]}
-        </sup>,
-      );
-    }
-
-    cursor = match.index + token.length;
-  }
-
-  if (cursor < text.length) {
-    nodes.push(text.slice(cursor));
-  }
-
-  return nodes;
-}
-
-function inlineWithBreaks(text: string): ReactNode[] {
-  return text.split("\n").flatMap((line, index) => {
-    const nodes = splitInline(line);
-    return index === 0 ? nodes : [<br key={`br-${index}`} />, ...nodes];
+function inlineWithBreaks(text: string, footnotes: MarkdownFootnote[] = [], keyPrefix = "line"): ReactNode[] {
+  return text.replace(/<br\s*\/?\s*>/gi, "\n").split("\n").flatMap((line, index) => {
+    const nodes = renderMarkdownInline(line, footnotes, `${keyPrefix}-${index}`);
+    return index === 0 ? nodes : [<br key={`${keyPrefix}-br-${index}`} />, ...nodes];
   });
 }
 
@@ -84,46 +29,49 @@ function imageBlock(block: string, imageClassName?: string) {
         className={imageClassName ?? "shape-frame w-full object-cover shadow-[0_16px_40px_rgba(12,19,45,0.14)]"}
         src={match[2]}
       />
-      {match[1] ? (
-        <figcaption className="mt-3 text-center text-[13px] leading-5 text-[#64748B]">
-          {match[1]}
-        </figcaption>
-      ) : null}
+      {match[1] ? <figcaption className="mt-3 text-center text-[13px] leading-5 text-[#64748B]">{match[1]}</figcaption> : null}
     </figure>
   );
 }
 
-function headingBlock(block: string, key: string) {
+function headingBlock(block: string, key: string, footnotes: MarkdownFootnote[]) {
   const match = block.match(/^(#{1,4})\s+(.+)$/);
   if (!match) return null;
 
   const level = match[1].length;
-  const text = match[2].trim();
-  const nodes = splitInline(text);
+  const nodes = renderMarkdownInline(match[2].trim(), footnotes, `${key}-heading`);
 
-  if (level === 1) {
-    return <h1 className="mt-10 text-[34px] font-black leading-tight text-[#111111] md:text-[42px]" key={key}>{nodes}</h1>;
-  }
-  if (level === 2) {
-    return <h2 className="mt-8 text-[28px] font-black leading-tight text-[#111111] md:text-[34px]" key={key}>{nodes}</h2>;
-  }
-  if (level === 3) {
-    return <h3 className="mt-7 text-[23px] font-black leading-tight text-[#111111] md:text-[28px]" key={key}>{nodes}</h3>;
-  }
+  if (level === 1) return <h1 className="mt-10 text-[34px] font-black leading-tight text-[#111111] md:text-[42px]" key={key}>{nodes}</h1>;
+  if (level === 2) return <h2 className="mt-8 text-[28px] font-black leading-tight text-[#111111] md:text-[34px]" key={key}>{nodes}</h2>;
+  if (level === 3) return <h3 className="mt-7 text-[23px] font-black leading-tight text-[#111111] md:text-[28px]" key={key}>{nodes}</h3>;
   return <h4 className="mt-6 text-[19px] font-black leading-tight text-[#111111] md:text-[23px]" key={key}>{nodes}</h4>;
 }
 
-function listBlock(block: string, key: string) {
+function inlineHeadingBlock(block: string, key: string, footnotes: MarkdownFootnote[]) {
+  if (!block.startsWith("**") || !block.endsWith("**")) return null;
+  const hasFootnote = block.endsWith("***") && footnotes.some((footnote) => footnote.marker === "*");
+  const content = block.slice(2, hasFootnote ? -3 : -2).trim();
+  if (!content || content.includes("**")) return null;
+  return (
+    <h3 className={styles.inlineHeading} key={key}>
+      {renderMarkdownInline(content, footnotes, `${key}-inline-heading`)}
+      {hasFootnote ? renderMarkdownInline("*", footnotes, `${key}-inline-heading-note`) : null}
+    </h3>
+  );
+}
+
+function listBlock(block: string, key: string, footnotes: MarkdownFootnote[]) {
   const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
   if (!lines.length) return null;
 
   const unordered = lines.every((line) => /^[-*]\s+/.test(line));
   if (unordered) {
+    if (lines.length === 1 && /Ethan\s+ॐ/.test(lines[0])) {
+      return <p className={styles.paragraph} key={key}>- {renderMarkdownInline(lines[0].replace(/^[-*]\s+/, ""), footnotes, `${key}-signoff`)}</p>;
+    }
     return (
-      <ul className="my-5 list-disc space-y-2 pl-6" key={key}>
-        {lines.map((line, index) => (
-          <li key={`${key}-li-${index}`}>{splitInline(line.replace(/^[-*]\s+/, ""))}</li>
-        ))}
+      <ul className={`${styles.list} list-disc`} key={key}>
+        {lines.map((line, index) => <li key={`${key}-li-${index}`}>{renderMarkdownInline(line.replace(/^[-*]\s+/, ""), footnotes, `${key}-li-${index}`)}</li>)}
       </ul>
     );
   }
@@ -131,10 +79,8 @@ function listBlock(block: string, key: string) {
   const ordered = lines.every((line) => /^\d+[.)]\s+/.test(line));
   if (ordered) {
     return (
-      <ol className="my-5 list-decimal space-y-2 pl-6" key={key}>
-        {lines.map((line, index) => (
-          <li key={`${key}-li-${index}`}>{splitInline(line.replace(/^\d+[.)]\s+/, ""))}</li>
-        ))}
+      <ol className={`${styles.list} list-decimal`} key={key}>
+        {lines.map((line, index) => <li key={`${key}-li-${index}`}>{renderMarkdownInline(line.replace(/^\d+[.)]\s+/, ""), footnotes, `${key}-li-${index}`)}</li>)}
       </ol>
     );
   }
@@ -142,50 +88,84 @@ function listBlock(block: string, key: string) {
   return null;
 }
 
-function quoteBlock(block: string, key: string) {
+function checklistItems(block: string): TutorialChecklistItem[] | null {
+  const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
+  if (!lines.length || !lines.every((line) => /^-\s+\[[ xX]\]\s+/.test(line))) return null;
+  return lines.map((line) => ({
+    checked: /^-\s+\[[xX]\]/.test(line),
+    text: line.replace(/^-\s+\[[ xX]\]\s+/, ""),
+  }));
+}
+
+function quoteBlock(block: string, key: string, footnotes: MarkdownFootnote[]) {
   const lines = block.split("\n").map((line) => line.trim());
   if (!lines.every((line) => line.startsWith(">"))) return null;
-
-  return (
-    <blockquote
-      className="my-6 border-l-4 border-current/25 pl-5 italic text-current/85"
-      key={key}
-    >
-      {inlineWithBreaks(lines.map((line) => line.replace(/^>\s?/, "")).join("\n"))}
-    </blockquote>
-  );
+  return <blockquote className={styles.quote} key={key}>{inlineWithBreaks(lines.map((line) => line.replace(/^>\s?/, "")).join("\n"), footnotes, `${key}-quote`)}</blockquote>;
 }
 
 function ruleBlock(block: string, key: string) {
   return /^-{3,}$/.test(block.trim()) ? <hr className="my-9 border-current/15" key={key} /> : null;
 }
 
-export function MarkdownContent({
-  blockClassName,
-  blocks,
-  imageClassName,
-}: MarkdownContentProps) {
+function parseFootnoteLine(line: string): MarkdownFootnote | null {
+  const asterisk = line.match(/^\\?\*\s+(.+)$/);
+  if (asterisk) return { marker: "*", text: asterisk[1].trim() };
+  const symbol = line.match(/^([†‡§¹²³⁴⁵⁶⁷⁸⁹])\s*(.+)$/);
+  return symbol ? { marker: symbol[1], text: symbol[2].trim() } : null;
+}
+
+function extractFootnotes(blocks: string[], supplied: MarkdownFootnote[]) {
+  const footnotes = new Map(supplied.map((footnote) => [footnote.marker, footnote]));
+  const content: string[] = [];
+
+  for (const block of blocks) {
+    const lines = String(block || "").split("\n").map((line) => line.trim()).filter(Boolean);
+    const parsed = lines.map(parseFootnoteLine);
+    if (lines.length && parsed.every(Boolean)) {
+      for (const footnote of parsed) {
+        if (footnote) footnotes.set(footnote.marker, footnote);
+      }
+    } else {
+      content.push(block);
+    }
+  }
+
+  return { blocks: content, footnotes: [...footnotes.values()] };
+}
+
+function checklistStorageKey(items: TutorialChecklistItem[]) {
+  const value = items.map((item) => item.text).join("|");
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `um-inline-checklist:${(hash >>> 0).toString(36)}`;
+}
+
+function sanitizeNotionBlock(block: string) {
+  return block.replace(/,\*\n\*{3}(-\s*Ethan\s+ॐ)\*\*$/u, ",\n**$1**");
+}
+
+export function MarkdownContent({ blockClassName, blocks, footnotes: suppliedFootnotes = [], imageClassName }: MarkdownContentProps) {
+  const normalized = extractFootnotes(blocks, suppliedFootnotes);
   return (
     <>
-      {blocks.map((block, index) => {
-        const trimmed = String(block || "").trim();
+      {normalized.blocks.map((block, index) => {
+        const trimmed = sanitizeNotionBlock(String(block || "").trim()).replace(/^!\[\]\(\)$/, "");
         if (!trimmed) return null;
-
-        const image = imageBlock(trimmed, imageClassName);
-        if (image) {
-          return <div key={`${index}-${trimmed.slice(0, 20)}`}>{image}</div>;
-        }
-
         const key = `${index}-${trimmed.slice(0, 20)}`;
+        const image = imageBlock(trimmed, imageClassName);
+        const checklist = checklistItems(trimmed);
+        if (image) return <div key={key}>{image}</div>;
+        if (checklist) return <TutorialChecklist footnotes={normalized.footnotes} items={checklist} key={key} storageKey={checklistStorageKey(checklist)} />;
         return (
-          image ||
-          headingBlock(trimmed, key) ||
-          listBlock(trimmed, key) ||
-          quoteBlock(trimmed, key) ||
+          headingBlock(trimmed, key, normalized.footnotes) ||
+          inlineHeadingBlock(trimmed, key, normalized.footnotes) ||
+          listBlock(trimmed, key, normalized.footnotes) ||
+          quoteBlock(trimmed, key, normalized.footnotes) ||
           ruleBlock(trimmed, key) ||
-          <p className={blockClassName} key={key}>
-            {inlineWithBreaks(trimmed)}
-          </p>
+          <p className={[styles.paragraph, blockClassName].filter(Boolean).join(" ")} key={key}>{inlineWithBreaks(trimmed, normalized.footnotes, key)}</p>
         );
       })}
     </>

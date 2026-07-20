@@ -1,9 +1,20 @@
 import { notionLevelSections } from "./notion-levels.generated";
+import {
+  notionLevelOneFaqs,
+  notionLevelOneSections,
+} from "./notion-level-one.generated";
 
 export interface TutorialSection {
   id: string;
   title: string;
   paragraphs: string[];
+  checklist?: string[];
+  footnotes?: TutorialInlineFootnote[];
+}
+
+export interface TutorialInlineFootnote {
+  marker: string;
+  text: string;
 }
 
 export interface TutorialChecklistItem {
@@ -104,60 +115,6 @@ const levelThemes: TutorialTheme[] = [
   },
 ];
 
-const levelOneSections: TutorialSection[] = [
-  {
-    id: "plunger-breathing",
-    title: "Step #1: Plunger Breathing",
-    paragraphs: [
-      "Poor posture is caused by unnecessary muscular tension, weak core habits, incorrect positioning of the hips, mental stress, and injuries.",
-      "Let's address the first factor on that list: tension. Flex your abs super tight. Contract, contract, contract. Now try to breathe into your belly.",
-      "Impossible, right? Totally locked up. Muscular tension and breathing cannot coexist; they oppose and block one another.",
-    ],
-  },
-  {
-    id: "rib-breathing",
-    title: "Step #2: Rib Breathing",
-    paragraphs: [
-      "Your ribcage is not a cage in the rigid sense. It is a movable structure that can expand in multiple directions.",
-      "The goal is to feel breath spread into the front, sides, and back without lifting your shoulders or bracing your belly.",
-    ],
-  },
-  {
-    id: "syringe-breathing",
-    title: "Step #3: Syringe Breathing",
-    paragraphs: [
-      "Your lungs can get pretty big, between 4.5L and 6L in the average adult.",
-      "Even while completely exhaled, they still span from the bottom of your ribcage all the way up to your collarbones, then behind you into scapulae and traps.",
-      "Imagine a syringe: someone places the needle in a cup of water and pulls the handle. The pressure differential causes liquid to be sucked into the tube.",
-      "Now imagine this syringe handle overlayed onto your shoulder line. When you inhale, the syringe gets pulled and drags air into the top and backside of your lungs.",
-    ],
-  },
-  {
-    id: "pelvis-reset",
-    title: "Step #4: Pelvis Reset",
-    paragraphs: [
-      "Breathing changes posture most reliably when the pelvis is no longer fighting the ribcage.",
-      "Think of this as creating a steady base. The work is subtle, but once you feel it, everything above it gets easier.",
-    ],
-  },
-  {
-    id: "standing-integration",
-    title: "Step #5: Standing Integration",
-    paragraphs: [
-      "Practice the same breathing pattern while standing. Keep your feet soft, your jaw relaxed, and your breath unforced.",
-      "The test is whether you can maintain the expansion without becoming rigid.",
-    ],
-  },
-  {
-    id: "daily-practice",
-    title: "Step #6: Daily Practice",
-    paragraphs: [
-      "Use this lesson for a few minutes at a time. Short, frequent practice works better than one heroic session.",
-      "Only mark the level complete once the breathing pattern feels available without needing to think your way through every step.",
-    ],
-  },
-];
-
 function normalizeNotionSections(
   sections: TutorialSection[],
 ): TutorialSection[] {
@@ -190,26 +147,16 @@ export const tutorials: TutorialLevel[] = [
     hero: "deeper. slower. easier.",
     vimeoId: "000000000",
     theme: levelThemes[0],
-    sections: levelOneSections,
-    media: [
-      {
-        id: "ribcage-placement",
-        captionTop: "Hand on chest",
-        captionBottom: "Hand on sides",
-      },
-    ],
-    footnotes: [
-      {
-        id: "ribcage-heart",
-        text: "Breathing with your ribcage also causes your heart to expand. When you inhale, your heart will speed up, and when you exhale, your heart will slow down. Levels 2 and 3 explore how you can use this to manually adjust your own blood pressure.",
-      },
-    ],
-    checklist: [
-      { text: "You can feel distinct movement in your ribcage during breathing", complete: true },
-      { text: "Your ribs can expand in all directions during inhale", complete: true },
-      { text: "You can maintain expansion without shoulder tension", complete: true },
-      { text: "You notice your heart rate subtly changing with your breath cycle", complete: false },
-    ],
+    sections: notionLevelOneSections.map((section) => ({
+      ...section,
+      checklist: [...section.checklist],
+      footnotes: section.footnotes.map((footnote) => ({ ...footnote })),
+      paragraphs: [...section.paragraphs],
+    })),
+    media: [],
+    footnotes: [],
+    checklist: [],
+    faqs: notionLevelOneFaqs.map((faq) => ({ ...faq })),
   },
   {
     level: 2,

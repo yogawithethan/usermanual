@@ -6,6 +6,9 @@ export interface PracticeUniverseTheme {
   accent: string;
   surface: string;
   ink: string;
+  onAccent?: string;
+  headingFontWeight?: number;
+  headingLetterSpacing?: string;
 }
 
 export interface PracticeUniverseSection {
@@ -166,6 +169,8 @@ export const practiceUniverses: PracticeUniverse[] = [
     theme: {
       primaryFont: "var(--font-yoga-reset-primary)",
       secondaryFont: "var(--font-yoga-reset-secondary)",
+      headingFontWeight: 400,
+      headingLetterSpacing: "0.065em",
       accent: "#084A74",
       surface: "#EAF7FC",
       ink: "#07364D",
@@ -200,7 +205,7 @@ export const practiceUniverses: PracticeUniverse[] = [
     unlockAfterLevel: 5,
     color: "#FF5757",
     theme: {
-      primaryFont: "\"Bubblebody Neu\", var(--font-dse-heading), sans-serif",
+      primaryFont: "\"Bubblebody Neue\", \"Nexa\", var(--font-dse-heading), sans-serif",
       secondaryFont: "\"Nexa\", var(--font-dse-poppins), sans-serif",
       accent: "#FF5757",
       surface: "#FFF1F1",

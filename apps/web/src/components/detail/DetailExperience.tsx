@@ -2,6 +2,8 @@ import type { CSSProperties, ReactNode } from "react";
 import { ViewTransition } from "react";
 import Link from "next/link";
 
+import { PranaLightningField } from "@/components/motion/PranaLightning";
+import floatingStyles from "@/components/ui/FloatingControl.module.css";
 import { BrandedVimeoPlayer } from "./BrandedVimeoPlayer";
 import styles from "./DetailExperience.module.css";
 
@@ -18,6 +20,7 @@ export interface DetailTheme {
 
 export interface DetailChapter {
   id: string;
+  kind?: "chapter" | "complete" | "faq" | "practice" | "video";
   label: string;
 }
 
@@ -126,7 +129,7 @@ function GateIcon({ type }: { type: "account" | "clock" | "lock" | "spark" }) {
 
 export function DetailBackLink({ label = "Back to The User Manual" }: { label?: string }) {
   return (
-    <Link href="/" transitionTypes={["nav-back"]} aria-label={label} className={styles.back}>
+    <Link href="/" transitionTypes={["nav-back"]} aria-label={label} className={`${floatingStyles.control} ${styles.back}`}>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
         <path d="m15 18-6-6 6-6" />
       </svg>
@@ -158,10 +161,11 @@ export function DetailHero({
         </>
       ) : null}
       {atmosphere === "lightning" ? (
-        <>
-          <img className={`${styles.lightning} ${styles.lightningA}`} src="/tutorial-icons/pf-lightning-icon.svg" alt="" aria-hidden />
-          <img className={`${styles.lightning} ${styles.lightningB}`} src="/tutorial-icons/pf-lightning-icon.svg" alt="" aria-hidden />
-        </>
+        <PranaLightningField
+          className="universe-fx universe-fx--pf"
+          firstClassName="universe-fx__lottie universe-fx__lottie--one"
+          secondClassName="universe-fx__lottie universe-fx__lottie--two"
+        />
       ) : null}
       <div className={styles.heroContent}>
         <span className={styles.heroIcon} aria-hidden>
@@ -184,9 +188,9 @@ export function DetailArticle({ children }: { children: ReactNode }) {
   return <article className={styles.article}>{children}</article>;
 }
 
-export function DetailSection({ children, id, title }: { children: ReactNode; id: string; title: string }) {
+export function DetailSection({ children, compactAfter = false, id, title }: { children: ReactNode; compactAfter?: boolean; id: string; title: string }) {
   return (
-    <section id={id} className={styles.section}>
+    <section id={id} className={`${styles.section} ${compactAfter ? styles.sectionCompactAfter : ""}`}>
       <h2 className={styles.sectionTitle}>{title}</h2>
       <div className={styles.copy}>{children}</div>
     </section>
@@ -206,7 +210,7 @@ export function DetailVideo({ vimeoId }: { vimeoId?: string | null }) {
               <span className={styles.play} aria-hidden>
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5L8 5.5Z" /></svg>
               </span>
-              <p className={styles.videoLabel}>Core film · coming soon</p>
+              <p className={styles.videoLabel}>Video · coming soon</p>
             </div>
           </div>
         )}

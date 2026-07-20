@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { renderMarkdownInline } from "./MarkdownInline";
+
 interface FaqItem {
   answer: string;
   question: string;
@@ -33,7 +35,7 @@ export function FaqAccordion({ accent, bodyFont, items }: FaqAccordionProps) {
                 className="text-[18px] font-bold leading-snug text-[#111111] md:text-[21px]"
                 style={{ fontFamily: bodyFont }}
               >
-                {item.question}
+                {renderMarkdownInline(item.question, [], "faq-question")}
               </span>
               <span
                 className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F5F8FC] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_3px_9px_rgba(12,19,45,0.08)] transition-colors"
@@ -62,7 +64,7 @@ export function FaqAccordion({ accent, bodyFont, items }: FaqAccordionProps) {
             >
               <div className="overflow-hidden">
                 <p className="px-5 pb-5 text-[18px] leading-[1.55] text-[#536071] md:px-6 md:text-[20px]">
-                  {item.answer}
+                  {renderMarkdownInline(item.answer, [], "faq-answer")}
                 </p>
               </div>
             </div>

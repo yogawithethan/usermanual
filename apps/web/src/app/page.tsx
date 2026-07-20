@@ -6,22 +6,22 @@ import {
   type CloudButtonTint,
 } from "@/components/molecules/CloudButton";
 import { StatusTooltip } from "@/components/ui/StatusTooltip";
+import { SystemIcon } from "@/components/ui/SystemIcon";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { ThemeProvider } from "@/themes/ThemeProvider";
 import { dseTheme } from "@/themes/dse";
-import { createClient } from "@/lib/supabase/server";
-import { USER_MANUAL_PRODUCT_SLUG } from "@/lib/entitlements";
 import { WELCOME_COMPLETED_COOKIE } from "@/lib/welcome";
+import { getDevAccessPreview } from "@/lib/dev-access-preview";
+import { getYweMemberSession } from "@/lib/ywe-member-api";
+import { PranaLightningField } from "@/components/motion/PranaLightning";
 import { practiceUniverses, type PracticeUniverse } from "@islands/content";
 import {
-  DEV_PREMIUM_COOKIE,
   DEV_PROGRESS_COOKIE,
   devCompletedLevelCount,
   normalizeDevProgressMode,
 } from "@/lib/dev-progress";
-import { ViewTransition, type CSSProperties, type ReactNode } from "react";
-import lightningLottie from "@/data/lightning-lottie.json";
+import { ViewTransition, type CSSProperties } from "react";
 import { LibraryModeSwitcher, type LibraryMode } from "@/components/library/LibraryModeSwitcher";
 import { HomeLibraryView } from "@/components/library/HomeLibraryViews";
 import styles from "./page.module.css";
@@ -179,38 +179,6 @@ const H2T_EDGE_PARTICLES = Array.from({ length: 118 }, (_, index) => {
   ] as const;
 });
 
-type LottieShape = {
-  i: [number, number][];
-  o: [number, number][];
-  v: [number, number][];
-  c: boolean;
-};
-
-type LottieItem = {
-  ty: string;
-  it?: LottieItem[];
-  ks?: { k?: LottieShape };
-  c?: { k?: number[] };
-  o?: { k?: number };
-  p?: { k?: number[] };
-  a?: { k?: number[] };
-  s?: { k?: number[] };
-  r?: { k?: number };
-};
-
-type LottieLayer = {
-  ip: number;
-  op: number;
-  shapes?: LottieItem[];
-  ks?: {
-    p?: { k?: number[] };
-    a?: { k?: number[] };
-    s?: { k?: number[] };
-    r?: { k?: number };
-    o?: { k?: number };
-  };
-};
-
 export default async function Home({ searchParams }: HomePageProps) {
   const query = await searchParams;
   const libraryMode = normalizeLibraryMode(query.mode);
@@ -219,64 +187,24 @@ export default async function Home({ searchParams }: HomePageProps) {
   const practiceWorld = practiceUniverses.some((universe) => universe.slug === query.world)
     ? query.world ?? "all"
     : "all";
-  const isDev = process.env.NODE_ENV !== "production";
   const cookieStore = await cookies();
-  const devProgressMode = isDev
+  const devAccessPreview = await getDevAccessPreview();
+  const devProgressMode = devAccessPreview.enabled
     ? normalizeDevProgressMode(cookieStore.get(DEV_PROGRESS_COOKIE)?.value)
     : "real";
   const isDevProgressOverride = devProgressMode !== "real";
-  const supabase = await createClient();
-  const { data: claimsData } = await supabase.auth.getClaims();
-  const userId = claimsData?.claims?.sub;
-  const { data: progress } = userId
-    ? await supabase
-        .from("tutorial_progress")
-        .select("level_number,status")
-        .eq("user_id", userId)
-        .eq("product_slug", USER_MANUAL_PRODUCT_SLUG)
-    : { data: null };
-  const { data: entitlement } = userId
-    ? await supabase
-        .from("product_entitlements")
-        .select("id,ends_at")
-        .eq("user_id", userId)
-        .eq("product_slug", USER_MANUAL_PRODUCT_SLUG)
-        .eq("status", "active")
-    : { data: null };
-  const { data: profile } = userId
-    ? await supabase
-        .from("profiles")
-        .select("welcome_completed_at,onboarding_completed_at")
-        .eq("id", userId)
-        .single()
-    : { data: null };
-  const { data: universeReleases } = await supabase
-    .from("practice_universes")
-    .select("slug,release_status")
-    .eq("product_slug", USER_MANUAL_PRODUCT_SLUG)
-    .eq("is_published", true);
-  const releaseStatusBySlug = new Map(
-    universeReleases?.map((item) => [item.slug, item.release_status]) ?? [],
-  );
-  const now = Date.now();
-  const hasPersistedEntitlement = Boolean(
-    entitlement?.some((item) => {
-      if (!item.ends_at) return true;
-      const endsAt = new Date(item.ends_at).getTime();
-      return Number.isFinite(endsAt) && endsAt > now;
-    }),
-  );
-  const isEntitled =
-    hasPersistedEntitlement ||
-    (isDev && cookieStore.get(DEV_PREMIUM_COOKIE)?.value === "1");
+  const memberSession = await getYweMemberSession();
+  const userId = memberSession.signedIn || devAccessPreview.signedIn
+    ? "shared-ywe-member"
+    : null;
+  const progress = memberSession.access?.levelProgress ?? [];
+  const isEntitled = Boolean(memberSession.access?.entitled) || devAccessPreview.entitled;
   const hasCompletedWelcome = Boolean(
-    profile?.welcome_completed_at ||
-      cookieStore.get(WELCOME_COMPLETED_COOKIE)?.value === "1",
+    memberSession.profile?.welcomeCompletedAt ||
+      cookieStore.get(WELCOME_COMPLETED_COOKIE)?.value === "1" ||
+      devProgressMode === "all",
   );
-  const hasCompletedOnboarding = Boolean(profile?.onboarding_completed_at);
-  const journeyReady = Boolean(
-    userId && hasCompletedWelcome && hasCompletedOnboarding,
-  );
+  const journeyReady = Boolean(userId && hasCompletedWelcome);
 
   const realCompletedLevels = new Set(
     progress
@@ -313,8 +241,6 @@ export default async function Home({ searchParams }: HomePageProps) {
       ? `/welcome?next=/levels/${levelNumber}`
       : !userId && !isDevProgressOverride
         ? `/login?next=/levels/${levelNumber}`
-        : !hasCompletedOnboarding && !isDevProgressOverride
-          ? `/onboarding?next=/levels/${levelNumber}`
       : isAvailable || completedLevels.has(levelNumber)
         ? `/levels/${levelNumber}`
         : `/locked?type=level&required=${levelNumber - 1}&target=${levelNumber}`;
@@ -399,7 +325,7 @@ export default async function Home({ searchParams }: HomePageProps) {
                 }
               >
                 <SideTutorialCard
-                  releaseStatus={releaseStatusBySlug.get(tutorial.slug) ?? "available"}
+                  releaseStatus="available"
                   tutorial={tutorial}
                   lockReason={
                     !isEntitled
@@ -443,10 +369,10 @@ function WelcomeButton() {
     <Link
       href="/welcome"
       transitionTypes={["nav-forward"]}
-      aria-label="Welcome — start here"
-      className="rainbow-border shape-frame block p-[2px]"
+      aria-label="Start Here — welcome introduction"
+      className="rainbow-border shape-frame group block p-[2px]"
     >
-      <span className="shape-frame relative flex min-h-[104px] items-center overflow-hidden bg-black px-7 md:min-h-[116px]">
+      <span className="shape-frame relative flex min-h-[104px] items-center justify-center overflow-hidden bg-black px-7 md:min-h-[116px]">
         <span
           className="relative z-[1] text-[28px] font-extrabold lowercase leading-none tracking-normal text-white md:text-[32px] xl:text-[36px]"
           style={{
@@ -455,17 +381,11 @@ function WelcomeButton() {
               "0 1px 2px rgba(0,0,0,0.28), 0 2px 8px rgba(12,19,45,0.32)",
           }}
         >
-          welcome
+          Start Here
         </span>
-        <StatusTooltip
-          label="In progress — continue"
-          className="absolute right-4 top-1/2 z-[2] h-10 w-10 -translate-y-1/2 md:h-11 md:w-11"
-        >
-          <StatusChip
-            state="in-progress"
-            tint={{ skyTop: "#FFFFFF", skyBottom: "#FFFFFF" }}
-          />
-        </StatusTooltip>
+        <span className="absolute right-7 top-1/2 z-[2] -translate-y-1/2 translate-x-2 scale-75 text-white opacity-0 transition-[opacity,transform] duration-300 ease-[cubic-bezier(.2,.8,.2,1)] group-hover:translate-x-0 group-hover:scale-100 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:scale-100 group-focus-visible:opacity-100">
+          <SystemIcon name="arrow-right" className="h-5 w-5" />
+        </span>
       </span>
     </Link>
   );
@@ -502,6 +422,8 @@ function SideTutorialCard({
   tutorial: PracticeUniverse;
 }) {
   const isLocked = state === "locked";
+  const canExpand = !isLocked;
+  const requiresPurchase = isLocked && lockReason === "purchase";
   const isComingSoon = releaseStatus === "coming_soon";
   const label = `${tutorial.title} — ${
     isLocked
@@ -528,14 +450,14 @@ function SideTutorialCard({
 
   return (
     <div
-      className={isLocked ? "relative" : "group relative"}
+      className={canExpand ? "group relative" : "relative"}
       data-ambient-paused={isLocked ? "" : undefined}
     >
       <ViewTransition name={isLocked ? `detail-locked-${tutorial.slug}` : `detail-universe-${tutorial.slug}`} share="detail-morph" default="none">
         <Link
         href={
           isLocked
-            ? lockReason === "purchase"
+            ? requiresPurchase
               ? `/paid?feature=${tutorial.slug}`
               : `/locked?type=universe&required=${tutorial.unlockAfterLevel}&target=${tutorial.slug}`
             : `/universes/${tutorial.slug}`
@@ -627,7 +549,7 @@ function SideTutorialCard({
         label={
           isLocked
             ? lockReason === "purchase"
-              ? "Locked — purchase The User Manual to unlock"
+              ? "Purchase lifetime access to unlock"
               : `Locked — finish Level ${tutorial.unlockAfterLevel}`
             : isComingSoon
               ? "Coming soon — included with lifetime access"
@@ -699,20 +621,11 @@ function UniverseCardAnimation({
 
   if (slug === "prana-fusion") {
     return (
-      <span aria-hidden className="universe-fx universe-fx--pf">
-        <LottieLightning
-          className="universe-fx__lottie universe-fx__lottie--one"
-          playDuration={3.7}
-          cycleDuration={9.8}
-          begin="-1.9s"
-        />
-        <LottieLightning
-          className="universe-fx__lottie universe-fx__lottie--two"
-          playDuration={3.33}
-          cycleDuration={12.7}
-          begin="-7.2s"
-        />
-      </span>
+      <PranaLightningField
+        className="universe-fx universe-fx--pf"
+        firstClassName="universe-fx__lottie universe-fx__lottie--one"
+        secondClassName="universe-fx__lottie universe-fx__lottie--two"
+      />
     );
   }
 
@@ -771,140 +684,6 @@ function UniverseCardAnimation({
   }
 
   return null;
-}
-
-function LottieLightning({
-  className,
-  playDuration,
-  cycleDuration,
-  begin,
-}: {
-  className: string;
-  playDuration: number;
-  cycleDuration: number;
-  begin: string;
-}) {
-  const layers = (lightningLottie.layers as LottieLayer[])
-    .slice()
-    .sort((first, second) => first.ip - second.ip);
-
-  return (
-    <svg
-      viewBox={`0 0 ${lightningLottie.w} ${lightningLottie.h}`}
-      className={className}
-      fill="none"
-      preserveAspectRatio="none"
-    >
-      {layers.map((layer, index) => (
-        <g
-          key={`${layer.ip}-${index}`}
-          opacity="0"
-          transform={lottieTransform(layer.ks)}
-        >
-          <animate
-            attributeName="opacity"
-            dur={`${cycleDuration}s`}
-            begin={begin}
-            repeatCount="indefinite"
-            calcMode="discrete"
-            keyTimes={lottieKeyTimes(
-              layer.ip,
-              layers[index + 1]?.ip ?? layer.op,
-              playDuration / cycleDuration,
-            )}
-            values="0;1;0;0;0"
-          />
-          {renderLottieItems(layer.shapes ?? [], `${index}`)}
-        </g>
-      ))}
-    </svg>
-  );
-}
-
-function renderLottieItems(
-  items: LottieItem[],
-  keyPrefix: string,
-  inheritedFill = "currentColor",
-): ReactNode[] {
-  return items.flatMap((item, index) => {
-    if (item.ty !== "gr") {
-      return [];
-    }
-
-    const children = item.it ?? [];
-    const transform = children.find((child) => child.ty === "tr");
-    const fill = children.find((child) => child.ty === "fl");
-    const fillColor = fill?.c?.k ? lottieColor(fill.c.k) : inheritedFill;
-    const paths = children.filter((child) => child.ty === "sh");
-    const groups = children.filter((child) => child.ty === "gr");
-
-    return [
-      <g key={`${keyPrefix}-${index}`} transform={lottieTransform(transform)}>
-        {paths.map((path, pathIndex) => (
-          <path
-            key={`${keyPrefix}-${index}-path-${pathIndex}`}
-            d={lottiePath(path.ks?.k)}
-            fill={fillColor}
-            fillOpacity={(fill?.o?.k ?? 100) / 100}
-          />
-        ))}
-        {renderLottieItems(groups, `${keyPrefix}-${index}`, fillColor)}
-      </g>,
-    ];
-  });
-}
-
-function lottiePath(shape?: LottieShape) {
-  if (!shape || shape.v.length === 0) {
-    return "";
-  }
-
-  const points = shape.v;
-  const outTangents = shape.o;
-  const inTangents = shape.i;
-  let path = `M ${points[0][0]} ${points[0][1]}`;
-  const segmentCount = shape.c ? points.length : points.length - 1;
-
-  for (let index = 0; index < segmentCount; index += 1) {
-    const nextIndex = (index + 1) % points.length;
-    const current = points[index];
-    const next = points[nextIndex];
-    const out = outTangents[index];
-    const input = inTangents[nextIndex];
-    path += ` C ${current[0] + out[0]} ${current[1] + out[1]} ${next[0] + input[0]} ${next[1] + input[1]} ${next[0]} ${next[1]}`;
-  }
-
-  return shape.c ? `${path} Z` : path;
-}
-
-function lottieTransform(transform?: LottieItem | LottieLayer["ks"]) {
-  if (!transform) {
-    return undefined;
-  }
-
-  const position = transform.p?.k ?? [0, 0];
-  const anchor = transform.a?.k ?? [0, 0];
-  const scale = transform.s?.k ?? [100, 100];
-  const rotation = transform.r?.k ?? 0;
-
-  return [
-    `translate(${position[0]} ${position[1]})`,
-    `rotate(${rotation})`,
-    `scale(${scale[0] / 100} ${scale[1] / 100})`,
-    `translate(${-anchor[0]} ${-anchor[1]})`,
-  ].join(" ");
-}
-
-function lottieColor(color: number[]) {
-  const [r, g, b, a = 1] = color;
-  return `rgba(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}, ${a})`;
-}
-
-function lottieKeyTimes(ip: number, op: number, activeWindow: number) {
-  const activeEnd = Math.max(0.05, Math.min(0.95, activeWindow));
-  const start = Math.max(0.001, Math.min(activeEnd - 0.002, (ip / lightningLottie.op) * activeEnd));
-  const end = Math.max(start + 0.001, Math.min(activeEnd - 0.001, (op / lightningLottie.op) * activeEnd));
-  return `0;${start.toFixed(3)};${end.toFixed(3)};${activeEnd.toFixed(3)};1`;
 }
 
 type TileIcon = "practice" | "faqs" | "downloads";

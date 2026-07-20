@@ -88,9 +88,15 @@ await check("available detail routes expose their core page structure", async ()
   for (const result of [level, universe]) {
     assert(result.text.includes("Core film"), "missing core film chapter");
     assert(result.text.includes("Practice this"), "missing associated practices section");
-    assert(result.text.includes("Master checklist"), "missing checklist section");
+    assert(
+      result.text.includes("Master checklist") || result.text.includes("Mastery Checklist"),
+      "missing checklist section",
+    );
   }
-  assert(level.text.includes("Complete level"), "missing level completion control");
+  assert(
+    /Complete level/i.test(level.text),
+    "missing level completion control",
+  );
   assert(
     universe.text.includes("Mark incomplete") || universe.text.includes("Complete tutorial"),
     "missing paid tutorial completion control",

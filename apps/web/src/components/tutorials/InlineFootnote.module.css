@@ -1,0 +1,82 @@
+.wrap { display: inline; }
+
+.marker {
+  position: relative;
+  display: inline-grid;
+  min-width: 1.35em;
+  height: 1.35em;
+  margin: 0 .12em;
+  padding: 0 .28em;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--detail-accent) 48%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--detail-accent-soft) 74%, white);
+  color: var(--detail-accent);
+  font: 800 .65em/1 var(--ui-font-label);
+  vertical-align: super;
+  cursor: pointer;
+  box-shadow: 0 3px 9px color-mix(in srgb, var(--detail-accent) 10%, transparent);
+  transition: background 180ms ease, transform 180ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.marker:hover { transform: translateY(-1px) scale(1.04); background: white; }
+.marker:focus-visible { outline: 3px solid color-mix(in srgb, var(--detail-accent) 28%, transparent); outline-offset: 2px; }
+
+.hint {
+  position: absolute;
+  z-index: 4;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: var(--detail-ink);
+  color: white;
+  font: 700 11px/1 var(--ui-font-label);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 4px);
+  white-space: nowrap;
+  transition: opacity 150ms ease, transform 180ms ease;
+}
+
+.marker:hover .hint, .marker:focus-visible .hint { opacity: 1; transform: translate(-50%, 0); }
+
+.insertion {
+  display: inline;
+  color: var(--detail-accent);
+  font: inherit;
+  opacity: 0;
+  vertical-align: baseline;
+  transition: opacity 140ms ease;
+}
+
+.insertionOpen {
+  opacity: 1;
+}
+
+.noteText { color: var(--detail-accent); }
+.caret { display: inline-block; width: 2px; height: 1em; margin-left: 2px; background: var(--detail-accent); vertical-align: -.12em; animation: blink 560ms steps(1) infinite; }
+.close {
+  display: inline-grid;
+  width: 1em;
+  height: 1em;
+  margin: 0 0 0 .2em;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: color-mix(in srgb, var(--detail-accent) 72%, var(--detail-ink));
+  font: 800 .72em/1 var(--ui-font-label);
+  vertical-align: super;
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+.close svg { width: .9em; height: .9em; }
+.close:hover { color: var(--detail-accent); }
+.close:focus-visible { outline: 2px solid color-mix(in srgb, var(--detail-accent) 42%, transparent); outline-offset: 2px; }
+@keyframes blink { 50% { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .marker, .hint, .insertion { transition: none; }
+  .caret { animation: none; }
+}

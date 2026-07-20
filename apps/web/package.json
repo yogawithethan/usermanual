@@ -10,6 +10,10 @@
     "cf:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "cf:upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
     "start": "next start",
+    "test:quality": "playwright test --config=playwright.quality.config.ts",
+    "test:performance": "node scripts/verify-production-performance.mjs",
+    "test:visual": "playwright test",
+    "test:visual:update": "playwright test --update-snapshots",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -25,7 +29,9 @@
     "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@opennextjs/cloudflare": "^1.19.5",
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

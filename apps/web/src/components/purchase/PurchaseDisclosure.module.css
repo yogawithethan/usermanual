@@ -96,6 +96,7 @@
   transition: transform 180ms cubic-bezier(.22, 1, .36, 1), box-shadow 220ms ease, background-color 220ms ease;
 }
 .primaryAction {
+  appearance: none;
   display: inline-flex;
   min-height: 3rem;
   align-items: center;
@@ -110,6 +111,7 @@
   font: 600 .83rem/1 var(--offer-ui);
   text-align: center;
   text-decoration: none;
+  cursor: pointer;
 }
 .primaryAction:hover { transform: translateY(-1px); box-shadow: 0 5px 12px rgb(25 22 20 / 19%), inset 0 1px 0 rgb(255 255 255 / 18%); }
 .toggle {

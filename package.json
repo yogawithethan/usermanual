@@ -1,18 +1,32 @@
 {
-  "name": "islands",
+  "name": "ywe-user-manual",
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@10.0.0",
+  "pnpm": {
+    "overrides": {
+      "postcss": "8.5.19"
+    }
+  },
   "scripts": {
     "dev": "corepack pnpm --filter @islands/web dev",
     "dev:mobile": "corepack pnpm --filter @islands/mobile start",
     "export:mobile:ios": "corepack pnpm --filter @islands/mobile export:ios",
     "build": "corepack pnpm --filter @islands/web build",
+    "build:verify": "NEXT_PUBLIC_SITE_URL=https://tutorial.yogawithethan.com corepack pnpm --filter @islands/web build",
+    "cf:build": "corepack pnpm --filter @islands/web cf:build",
+    "cf:build:verify": "NEXT_PUBLIC_SITE_URL=https://tutorial.yogawithethan.com corepack pnpm --filter @islands/web cf:build",
     "db:push": "supabase db push",
     "db:types": "supabase gen types typescript --project-id swtsqngrkkhggjacfhft > packages/db/src/database.types.ts",
     "smoke:um": "node scripts/smoke-user-manual.mjs",
     "smoke:um:details": "node scripts/smoke-user-manual-details.mjs",
     "smoke:um:mobile-local": "USER_MANUAL_BASE_URL=http://localhost:3000 USER_MANUAL_CHECK_MOBILE_REFRESH=1 USER_MANUAL_CHECK_MOBILE_CHECKOUT_RETURN=1 node scripts/smoke-user-manual.mjs",
+    "verify:ui": "node scripts/verify-ui-system.mjs",
+    "verify:goal7": "node scripts/verify-goal7-detail-experiences.mjs",
+    "verify:tutorial-formatting": "node scripts/verify-tutorial-content-rendering.mjs",
+    "test:visual": "corepack pnpm --filter @islands/web test:visual",
+    "test:visual:update": "corepack pnpm --filter @islands/web test:visual:update",
+    "verify:performance": "corepack pnpm --filter @islands/web test:performance",
     "start": "corepack pnpm --filter @islands/web start",
     "typecheck": "corepack pnpm --filter @islands/web typecheck",
     "typecheck:mobile": "corepack pnpm --filter @islands/mobile typecheck"

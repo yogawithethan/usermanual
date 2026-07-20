@@ -35,10 +35,10 @@ export function UniverseDetail({
 }) {
   const theme = getUniverseDetailTheme(universe);
   const chapters = [
-    { id: "video", label: "Core film" },
+    { id: "video", kind: "video" as const, label: "Video" },
     ...sections.map((section) => ({ id: section.id, label: section.title })),
-    { id: "practices", label: "Practices" },
-    { id: "complete", label: "Complete" },
+    { id: "complete", kind: "complete" as const, label: "Complete" },
+    { id: "practices", kind: "practice" as const, label: "Practices" },
   ];
   const checklist = sections.map((section) => ({ text: `Read and reflect on ${section.title}`, complete: false }));
 

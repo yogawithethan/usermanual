@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import type { IslandsAuthMode } from "@/lib/islands-sso";
+import { getYweWorkerOrigin } from "@/lib/ywe-origin";
 
 interface IslandsSsoButtonProps {
   mode?: IslandsAuthMode;
@@ -14,12 +15,13 @@ export function IslandsSsoButton({
   mode = "signin",
   next,
 }: IslandsSsoButtonProps) {
-  const href = `/auth/islands?next=${encodeURIComponent(next)}&mode=${mode}`;
+  const siteOrigin = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3100").replace(/\/+$/, "");
+  const href = `${getYweWorkerOrigin()}/auth/islands/start?return=${encodeURIComponent(`${siteOrigin}${next}`)}&mode=${mode}`;
 
   return (
     <Link
       href={href}
-      className={`shape-control group inline-flex h-[52px] w-full items-center justify-center border border-[#D7DCE3] bg-white px-5 text-[15px] font-bold leading-none text-[#111111] shadow-[inset_0_1px_0_rgba(255,255,255,0.92)] transition-colors hover:border-[#C7CED8] active:scale-[0.985] ${className}`}
+      className={`group inline-flex h-[52px] w-full items-center justify-center rounded-[18px] border border-[#D7DCE3] bg-white px-5 text-[15px] font-bold leading-none text-[#111111] shadow-[inset_0_1px_0_rgba(255,255,255,0.92)] transition-colors hover:border-[#C7CED8] active:scale-[0.985] ${className}`}
     >
       <span className="flex h-full items-center justify-center gap-2.5">
         <span className="leading-none">{mode === "signup" ? "Sign up with" : "Sign in with"}</span>

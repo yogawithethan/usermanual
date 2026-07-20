@@ -124,6 +124,13 @@ drsti-header {
   --mobile-bar-bg: var(--mobile-surface);
 }
 
+html[data-ywe-detail-header] drsti-header {
+  position: fixed;
+  inset: 0 0 auto;
+  height: 0;
+  transition: opacity 180ms ease, transform 260ms cubic-bezier(.22, 1, .36, 1);
+}
+
 html[data-um-theme="dark"] {
   color-scheme: dark;
   --app-chrome-bg: #101114;
@@ -144,9 +151,17 @@ html[data-ywe-shared-header] body {
   padding-top: 52px;
 }
 
+html[data-ywe-shared-header][data-ywe-detail-header] body {
+  padding-top: 0;
+}
+
 @media (min-width: 768px) {
   html[data-ywe-shared-header] body {
     padding-top: 76px;
+  }
+
+  html[data-ywe-shared-header][data-ywe-detail-header] body {
+    padding-top: 0;
   }
 }
 

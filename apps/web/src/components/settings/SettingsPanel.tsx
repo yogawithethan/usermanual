@@ -7,6 +7,8 @@ import { GraduationCap, User } from "@phosphor-icons/react";
 import { Icon } from "@/components/settings/icons";
 import type { IslandsInfo } from "@/components/settings/IslandsWordmark";
 import { UserManualSettings } from "@/components/settings/UserManualSettings";
+import floatingStyles from "@/components/ui/FloatingControl.module.css";
+import { useDirectionalTopChrome } from "@/components/ui/useDirectionalTopChrome";
 import { useSettings } from "@/lib/settings/SettingsContext";
 import styles from "./SettingsPanel.module.css";
 
@@ -111,6 +113,7 @@ export function SettingsLauncher({ islandsInfo, showLauncher = true }: { islands
   const { tokens } = useSettings();
   const panelRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
+  const chromeHidden = useDirectionalTopChrome({ enabled: showLauncher, forceVisible: open });
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -142,13 +145,13 @@ export function SettingsLauncher({ islandsInfo, showLauncher = true }: { islands
 
   return (
     <>
-      {showLauncher ? <div data-settings-launcher className={styles.launcherDock}>
+      {showLauncher ? <div data-settings-launcher className={`${styles.launcherDock} ${chromeHidden ? styles.launcherDockHidden : ""}`}>
         <button
           type="button"
           aria-label="Open settings"
           aria-expanded={open}
           onClick={() => openPanel("home")}
-          className={`${styles.launcherButton} flex items-center justify-center rounded-full`}
+          className={`${floatingStyles.control} ${styles.launcherButton}`}
         >
           <SettingsGearIcon className="h-[19px] w-[19px]" />
         </button>

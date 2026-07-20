@@ -1,18 +1,14 @@
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
-import { cookies } from "next/headers";
-import { getPracticeUniverse } from "@islands/content";
-
-import { getUserManualEntitlement } from "@/lib/entitlements";
-import { getCompletedLevelCount } from "@/lib/practice-access";
 import {
-  DEV_PROGRESS_COOKIE,
-  DEV_AUTH_COOKIE,
-  DEV_PREMIUM_COOKIE,
-  devCompletedLevelCount,
-  normalizeDevProgressMode,
-} from "@/lib/dev-progress";
-import { createClient } from "@/lib/supabase/server";
+  getPracticeUniverse,
+  getUniversePractices,
+  getUniverseTutorial,
+  practiceUniverses,
+} from "@islands/content";
+
+import { getDevAccessPreview } from "@/lib/dev-access-preview";
+import { callYweMemberApi, getYweMemberSession } from "@/lib/ywe-member-api";
 import { UniverseDetail } from "@/components/detail/UniverseDetail";
 import { getUniverseDetailTheme } from "@/components/detail/UniverseDetail";
 import {
@@ -36,31 +32,8 @@ interface UniversePageProps {
   }>;
 }
 
-interface UniverseSectionRow {
-  id: string;
-  paragraphs: unknown;
-  slug: string;
-  title: string;
-}
-
-interface UniversePracticeRow {
-  body_areas: string[] | null;
-  description: string | null;
-  duration_minutes: number | null;
-  goals: string[] | null;
-  id: string;
-  intensity: string | null;
-  media_kind: string;
-  safety_notes: string | null;
-  sort_order: number | null;
-  title: string;
-  unlock_level: number | null;
-}
-
-function asStringArray(value: unknown) {
-  return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === "string")
-    : [];
+export function generateStaticParams() {
+  return practiceUniverses.map((universe) => ({ slug: universe.slug }));
 }
 
 export default async function UniversePage({ params, searchParams }: UniversePageProps) {
@@ -72,25 +45,22 @@ export default async function UniversePage({ params, searchParams }: UniversePag
     notFound();
   }
 
-  const cookieStore = await cookies();
-  const isDev = process.env.NODE_ENV !== "production";
-  const devProgressMode = isDev
-    ? normalizeDevProgressMode(cookieStore.get(DEV_PROGRESS_COOKIE)?.value)
-    : "real";
-  const isDevProgressOverride = devProgressMode !== "real";
-  const isDevAccountOverride = isDev && cookieStore.get(DEV_AUTH_COOKIE)?.value === "1";
-  const isDevPremiumOverride = isDev && cookieStore.get(DEV_PREMIUM_COOKIE)?.value === "1";
-  const isDevComingSoonPreview = isDev && pageParams.preview === "coming-soon";
-  const isDevDataPreview =
-    isDevAccountOverride && isDevPremiumOverride && isDevProgressOverride;
-  const auth = isDevAccountOverride && isDevPremiumOverride
-    ? { entitled: false, userId: null }
-    : await getUserManualEntitlement();
-  const { entitled, userId } = auth;
-  const canPreviewAccount = Boolean(userId) || isDevAccountOverride;
-  const canPreviewPremium = entitled || isDevPremiumOverride;
+  const tutorial = getUniverseTutorial(slug);
+  if (!tutorial) notFound();
 
-  if (!canPreviewAccount) {
+  const [session, devAccessPreview] = await Promise.all([
+    getYweMemberSession(),
+    getDevAccessPreview(),
+  ]);
+  const signedIn = session.signedIn || devAccessPreview.signedIn;
+  const entitled = Boolean(session.access?.entitled) || devAccessPreview.entitled;
+  const completedLevels = session.access?.completedLevels ?? [];
+  const progressionReady =
+    completedLevels.includes(universe.unlockAfterLevel) || devAccessPreview.fullAccess;
+  const isDevComingSoonPreview =
+    devAccessPreview.enabled && pageParams.preview === "coming-soon";
+
+  if (!signedIn) {
     return (
       <UniverseGate
         action={<><DetailGatePrimary href={`/login?next=${encodeURIComponent(`/universes/${universe.slug}`)}`}>Log in or create an account</DetailGatePrimary><DetailGateSecondary>Back to The User Manual</DetailGateSecondary></>}
@@ -103,7 +73,7 @@ export default async function UniversePage({ params, searchParams }: UniversePag
     );
   }
 
-  if (!canPreviewPremium) {
+  if (!entitled) {
     return (
       <UniverseGate
         action={<><DetailGatePrimary href={`/paid?feature=${encodeURIComponent(universe.slug)}`}>Unlock The User Manual · $144</DetailGatePrimary><DetailGateSecondary>Not right now</DetailGateSecondary></>}
@@ -116,34 +86,19 @@ export default async function UniversePage({ params, searchParams }: UniversePag
     );
   }
 
-  const supabase = await createClient();
-  const db = supabase as any;
-  const [{ data: release }, completedLevelCount] = await Promise.all([
-    isDevAccountOverride && isDevPremiumOverride
-      ? Promise.resolve({ data: { release_status: "available" } })
-      : supabase
-          .from("practice_universes")
-          .select("release_status")
-          .eq("slug", universe.slug)
-          .eq("product_slug", "the-user-manual")
-          .single(),
-    isDevProgressOverride
-      ? Promise.resolve(devCompletedLevelCount(devProgressMode, 0))
-      : getCompletedLevelCount(userId!),
-  ]);
-
-  if (release?.release_status === "coming_soon" || isDevComingSoonPreview) {
-    const { data: interest } = userId ? await supabase
-      .from("content_release_interests")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("universe_slug", universe.slug)
-      .maybeSingle() : { data: null };
-
-    const notificationRegistered = pageParams.notification === "registered" || Boolean(interest);
+  if (isDevComingSoonPreview) {
+    const interestResponse = session.signedIn
+      ? await callYweMemberApi(`/api/release-interest/user-manual?tutorialSlug=${encodeURIComponent(universe.slug)}`)
+      : null;
+    const interest = interestResponse?.ok
+      ? await interestResponse.json() as { emailEnabled?: boolean; telegramEnabled?: boolean }
+      : null;
+    const notificationRegistered =
+      pageParams.notification === "registered" ||
+      Boolean(interest?.emailEnabled || interest?.telegramEnabled);
     return <UniverseGate
       action={notificationRegistered ? <DetailGateSecondary>Back to The User Manual</DetailGateSecondary> : <><form action={registerReleaseInterest}><input type="hidden" name="slug" value={universe.slug} /><button className={detailStyles.gatePrimary} type="submit">Email me when it is ready</button></form><DetailGateSecondary>Back to The User Manual</DetailGateSecondary></>}
-      body={`Your lifetime purchase already includes this tutorial. ${completedLevelCount >= universe.unlockAfterLevel ? "You have completed its required level." : `Complete Level ${universe.unlockAfterLevel} whenever you are ready.`}`}
+      body={`Your lifetime purchase already includes this tutorial. ${progressionReady ? "You have completed its required level." : `Complete Level ${universe.unlockAfterLevel} whenever you are ready.`}`}
       icon="clock"
       state="Coming soon"
       status={pageParams.error ? pageParams.error : notificationRegistered ? "You are on the release list. We will email you when it opens." : undefined}
@@ -152,10 +107,10 @@ export default async function UniversePage({ params, searchParams }: UniversePag
     />;
   }
 
-  if (completedLevelCount < universe.unlockAfterLevel) {
+  if (!progressionReady) {
     return (
       <UniverseGate
-        action={<><DetailGatePrimary href={`/levels/${completedLevelCount + 1}`}>Continue with Level {completedLevelCount + 1}</DetailGatePrimary><DetailGateSecondary>Back to the roadmap</DetailGateSecondary></>}
+        action={<><DetailGatePrimary href={`/levels/${Math.min(completedLevels.length + 1, universe.unlockAfterLevel)}`}>Continue with Level {Math.min(completedLevels.length + 1, universe.unlockAfterLevel)}</DetailGatePrimary><DetailGateSecondary>Back to the roadmap</DetailGateSecondary></>}
         body={`You own this tutorial. It opens after you complete Level ${universe.unlockAfterLevel} of deeper. slower. easier.`}
         icon="lock"
         state="Progression locked"
@@ -165,55 +120,33 @@ export default async function UniversePage({ params, searchParams }: UniversePag
     );
   }
 
-  const [{ data: sections }, { data: practices }, { data: universeProgress }] = await Promise.all([
-    isDevDataPreview
-      ? Promise.resolve({ data: [] })
-      : db
-          .from("practice_universe_sections")
-          .select("id,slug,title,paragraphs,sort_order")
-          .eq("universe_slug", universe.slug)
-          .eq("is_published", true)
-          .order("sort_order", { ascending: true }),
-    isDevDataPreview
-      ? Promise.resolve({ data: [] })
-      : db
-          .from("practices")
-          .select("id,title,description,duration_minutes,media_kind,body_areas,goals,intensity,safety_notes,unlock_level,sort_order")
-          .eq("universe_slug", universe.slug)
-          .eq("is_published", true)
-          .order("sort_order", { ascending: true }),
-    userId && !isDevDataPreview
-      ? db
-          .from("practice_universe_progress")
-          .select("status")
-          .eq("user_id", userId)
-          .eq("product_slug", "the-user-manual")
-          .eq("universe_slug", universe.slug)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
-  ]);
-  const universeSections = ((sections ?? []) as UniverseSectionRow[]).length
-    ? ((sections ?? []) as UniverseSectionRow[]).map((section) => ({
-        id: section.slug,
-        paragraphs: asStringArray(section.paragraphs),
-        title: section.title,
-      }))
-    : universe.sections;
-  const universePractices = (practices ?? []) as UniversePracticeRow[];
+  let universeStatus: "not_started" | "in_progress" | "completed" | undefined;
+  if (session.signedIn) {
+    const response = await callYweMemberApi("/api/progress/practices");
+    if (response.ok) {
+      const result = await response.json() as {
+        practices?: Array<{ practice_id: string; status: "not_started" | "in_progress" | "completed" }>;
+      };
+      universeStatus = result.practices?.find(
+        (item) => item.practice_id === universe.slug,
+      )?.status;
+    }
+  }
+  const universePractices = getUniversePractices(slug);
   return (
     <ThemeProvider theme={dseTheme} className="flex-1">
       <UniverseDetail
         completeAction={completeUniverse}
-        completed={devProgressMode === "all" || universeProgress?.status === "completed"}
+        completed={devAccessPreview.fullAccess || universeStatus === "completed"}
         practices={universePractices.map((practice) => ({
           description: practice.description,
-          duration: practice.duration_minutes,
-          href: `/api/practices/${practice.id}/media`,
+          duration: practice.durationMinutes,
+          href: `/universes/${universe.slug}/practices/${practice.id}`,
           id: practice.id,
-          kind: practice.media_kind,
+          kind: practice.kind,
           title: practice.title,
         }))}
-        sections={universeSections}
+        sections={tutorial.sections}
         universe={universe}
       />
     </ThemeProvider>
