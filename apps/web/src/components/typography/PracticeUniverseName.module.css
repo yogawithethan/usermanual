@@ -1,0 +1,17 @@
+.macronA {
+  display: inline-block;
+  line-height: 1;
+  position: relative;
+  vertical-align: baseline;
+}
+
+.macronA::after {
+  background: currentColor;
+  border-radius: 999px;
+  content: "";
+  height: 0.065em;
+  left: 18%;
+  position: absolute;
+  right: 18%;
+  top: 0.24em;
+}

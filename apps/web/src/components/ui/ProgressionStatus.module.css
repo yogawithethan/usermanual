@@ -1,0 +1,48 @@
+.root {
+  display: inline-flex;
+  outline: none;
+  position: relative;
+}
+
+.root:focus-visible {
+  border-radius: var(--theme-radius-pill);
+  outline: 3px solid color-mix(in srgb, var(--theme-color-focus) 32%, transparent);
+  outline-offset: 3px;
+}
+
+.icon { height: 1rem; width: 1rem; }
+.dot { background: currentColor; border-radius: 999px; height: 0.45rem; width: 0.45rem; }
+
+.tooltip {
+  background: var(--theme-color-ink-strong);
+  border-radius: 0.5rem;
+  bottom: calc(100% + 0.55rem);
+  color: var(--theme-color-surface-raised);
+  font-family: var(--ui-font-label);
+  font-size: var(--ui-type-caption);
+  font-weight: 700;
+  left: 50%;
+  line-height: 1.25;
+  max-width: 15rem;
+  opacity: 0;
+  padding: 0.45rem 0.6rem;
+  pointer-events: none;
+  position: absolute;
+  text-align: center;
+  transform: translate(-50%, 0.25rem);
+  transition: opacity var(--ui-motion-fast) ease, transform var(--ui-motion-fast) var(--ui-motion-ease);
+  visibility: hidden;
+  white-space: nowrap;
+  z-index: var(--ui-layer-tooltip);
+}
+
+.root:hover .tooltip,
+.root:focus-visible .tooltip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  visibility: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tooltip { transition: none; }
+}

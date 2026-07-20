@@ -2,6 +2,8 @@
 
 import { useId, useState, type CSSProperties } from "react";
 
+import { renderMarkdownInline } from "@/components/tutorials/MarkdownInline";
+
 import styles from "./HomeLibraryViews.module.css";
 
 interface FaqAnswer {
@@ -64,11 +66,11 @@ export function FaqWorldAccordion({ accent, answers, ink, logo, surface, title }
                     onClick={() => setOpenAnswer(answerOpen ? null : index)}
                     type="button"
                   >
-                    <span>{faq.question}</span>
+                    <span>{renderMarkdownInline(faq.question, [], `library-faq-question-${index}`)}</span>
                     <span aria-hidden className={styles.turningPlus}><i /><i /></span>
                   </button>
                   <div aria-hidden={!answerOpen} className={styles.answerReveal} data-open={answerOpen} id={answerId}>
-                    <div><p>{faq.answer}</p></div>
+                    <div><p>{renderMarkdownInline(faq.answer, [], `library-faq-answer-${index}`)}</p></div>
                   </div>
                 </section>
               );

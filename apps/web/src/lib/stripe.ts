@@ -77,7 +77,7 @@ export async function createUserManualCheckoutSession({
   } else {
     body.set("line_items[0][price_data][currency]", "usd");
     body.set("line_items[0][price_data][unit_amount]", String(USER_MANUAL_PRICE_CENTS));
-    body.set("line_items[0][price_data][product_data][name]", "The User Manual Companion");
+    body.set("line_items[0][price_data][product_data][name]", "The User Manual");
     body.set(
       "line_items[0][price_data][product_data][description]",
       "Practice library, FAQs, downloads, and future User Manual creations.",

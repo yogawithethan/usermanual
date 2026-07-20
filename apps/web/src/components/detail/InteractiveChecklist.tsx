@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useState } from "react";
+import { renderMarkdownInline } from "@/components/tutorials/MarkdownInline";
 import { detailStyles as styles } from "./DetailExperience";
 
 export interface InteractiveChecklistItem {
@@ -13,12 +14,14 @@ export function InteractiveChecklist({
   heading = "Master checklist",
   id = "checklist",
   intro = "A private working list—not a gate. Check and uncheck anything as your practice changes.",
+  embedded = false,
   items,
   storageKey,
 }: {
   heading?: string;
   id?: string;
   intro?: string;
+  embedded?: boolean;
   items: InteractiveChecklistItem[];
   storageKey: string;
 }) {
@@ -46,7 +49,7 @@ export function InteractiveChecklist({
   }
 
   return (
-    <section id={id} className={`${styles.section} ${styles.checklist}`}>
+    <section id={id} className={`${styles.checklist} ${embedded ? styles.checklistEmbedded : styles.section}`}>
       <h2 className={styles.checklistHeading}>{heading}</h2>
       <p className={styles.checklistIntro}>{intro}</p>
       <div className={styles.checklistItems}>
@@ -57,7 +60,7 @@ export function InteractiveChecklist({
               {showGroup ? <h3 className={styles.checkGroup}>{item.group}</h3> : null}
               <button type="button" className={`${styles.checkItem} ${checked[index] ? styles.checkItemDone : ""}`} aria-pressed={checked[index]} onClick={() => toggle(index)}>
                 <span className={styles.checkMark} aria-hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 4 4L19 6" /></svg></span>
-                <span className={styles.checkText}>{item.text}</span>
+                <span className={styles.checkText}>{renderMarkdownInline(item.text, [], `checklist-${index}`)}</span>
               </button>
             </Fragment>
           );

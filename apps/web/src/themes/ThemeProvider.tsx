@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useMemo, type CSSProperties, type ReactNode } from "react";
 
-import type { Theme } from "@islands/theme";
+import { uiSystemTokens, type Theme } from "@islands/theme";
 
 const ThemeContext = createContext<Theme | null>(null);
 
@@ -34,15 +34,48 @@ function themeToCssVars(theme: Theme): CSSProperties {
     "--theme-color-primary-to": theme.colors.primaryTo,
     "--theme-color-surface": theme.colors.surface,
     "--theme-color-ink": theme.colors.ink,
+    "--theme-color-ink-strong": theme.colors.ink,
     "--theme-color-muted": theme.colors.muted,
     "--theme-color-border": theme.colors.border,
     "--theme-color-locked": theme.colors.locked,
     "--theme-color-completed": theme.colors.completed,
+    "--theme-color-focus": theme.colors.primaryFrom,
 
     "--theme-font-heading": theme.fonts.heading,
     "--theme-font-display": theme.fonts.display ?? theme.fonts.heading,
     "--theme-font-body": theme.fonts.body,
     "--theme-font-label": theme.fonts.body,
+    "--ui-font-heading": theme.fonts.heading,
+    "--ui-font-body": theme.fonts.body,
+    "--ui-font-label": theme.fonts.body,
+
+    "--ui-type-display": uiSystemTokens.typography.display,
+    "--ui-type-title": uiSystemTokens.typography.title,
+    "--ui-type-heading": uiSystemTokens.typography.heading,
+    "--ui-type-subheading": uiSystemTokens.typography.subheading,
+    "--ui-type-body": uiSystemTokens.typography.body,
+    "--ui-type-body-small": uiSystemTokens.typography.bodySmall,
+    "--ui-type-label": uiSystemTokens.typography.label,
+    "--ui-type-caption": uiSystemTokens.typography.caption,
+
+    "--ui-control-sm": uiSystemTokens.control.small,
+    "--ui-control-md": uiSystemTokens.control.medium,
+    "--ui-control-lg": uiSystemTokens.control.large,
+    "--ui-control-icon": uiSystemTokens.control.icon,
+
+    "--ui-content-width": uiSystemTokens.layout.content,
+    "--ui-reading-width": uiSystemTokens.layout.reading,
+    "--ui-narrow-width": uiSystemTokens.layout.narrow,
+
+    "--ui-motion-fast": uiSystemTokens.motion.fast,
+    "--ui-motion-standard": uiSystemTokens.motion.standard,
+    "--ui-motion-slow": uiSystemTokens.motion.slow,
+    "--ui-motion-ease": uiSystemTokens.motion.ease,
+
+    "--ui-layer-content": uiSystemTokens.layer.content,
+    "--ui-layer-sticky": uiSystemTokens.layer.sticky,
+    "--ui-layer-overlay": uiSystemTokens.layer.overlay,
+    "--ui-layer-tooltip": uiSystemTokens.layer.tooltip,
 
     "--theme-radius-pill": theme.radii.pill,
     "--theme-radius-card": theme.radii.card,

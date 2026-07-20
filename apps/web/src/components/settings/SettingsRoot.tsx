@@ -23,7 +23,6 @@ const islandsInfo: IslandsInfo = {
 
 export function SettingsRoot() {
   const pathname = usePathname();
-  const isDetailPage = /^\/(levels|universes)\//.test(pathname);
 
-  return <SettingsLauncher islandsInfo={islandsInfo} showLauncher={!isDetailPage} />;
+  return <SettingsLauncher islandsInfo={islandsInfo} showLauncher={pathname.startsWith("/ui-lab")} />;
 }

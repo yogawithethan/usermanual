@@ -8,6 +8,7 @@ import { FaqAccordion } from "@/components/tutorials/FaqAccordion";
 import { MarkdownContent } from "@/components/tutorials/MarkdownContent";
 import { AssociatedPractices } from "@/components/detail/AssociatedPractices";
 import { ChapterNavigator } from "@/components/detail/ChapterNavigator";
+import { LevelCompletion } from "@/components/detail/LevelCompletion";
 import {
   DetailArticle,
   DetailBackLink,
@@ -30,23 +31,25 @@ import type {
   TutorialMediaBlock,
   TutorialSection,
 } from "@islands/content";
-import { getTutorial, tutorials } from "@islands/content";
+import {
+  getTutorial,
+  getUniversePractices,
+  practiceUniverses,
+  tutorials,
+} from "@islands/content";
 import { getPublishedTutorial } from "@/lib/tutorial-content";
 import { ThemeProvider } from "@/themes/ThemeProvider";
 import { dseTheme } from "@/themes/dse";
-import { createClient } from "@/lib/supabase/server";
 import {
   DEV_PROGRESS_COOKIE,
-  DEV_AUTH_COOKIE,
-  DEV_PREMIUM_COOKIE,
   devCompletedLevelCount,
   normalizeDevProgressMode,
 } from "@/lib/dev-progress";
-import { USER_MANUAL_PRODUCT_SLUG } from "@/lib/entitlements";
 import { getUserManualEntitlement } from "@/lib/entitlements";
-import { contiguousCompletedLevelCount } from "@/lib/practice-access";
 import { WELCOME_COMPLETED_COOKIE } from "@/lib/welcome";
 import { YwePasswordlessAccess } from "@/components/auth/YwePasswordlessAccess";
+import { getDevAccessPreview } from "@/lib/dev-access-preview";
+import { callYweMemberApi, getYweMemberSession } from "@/lib/ywe-member-api";
 
 interface LevelPageProps {
   params: Promise<{
@@ -62,19 +65,13 @@ export function generateStaticParams() {
 
 export default async function LevelPage({ params }: LevelPageProps) {
   const { level } = await params;
-  const isDev = process.env.NODE_ENV !== "production";
   const cookieStore = await cookies();
-  const devProgressMode = isDev
+  const devAccessPreview = await getDevAccessPreview();
+  const devProgressMode = devAccessPreview.enabled
     ? normalizeDevProgressMode(cookieStore.get(DEV_PROGRESS_COOKIE)?.value)
     : "real";
   const isDevProgressOverride = devProgressMode !== "real";
-  const isDevAccountOverride = isDev && cookieStore.get(DEV_AUTH_COOKIE)?.value === "1";
-  const isDevPremiumOverride = isDev && cookieStore.get(DEV_PREMIUM_COOKIE)?.value === "1";
-  const isDevDataPreview =
-    isDevAccountOverride || isDevPremiumOverride || isDevProgressOverride;
-  const tutorial = await getPublishedTutorial(level, {
-    preferStatic: isDevDataPreview,
-  });
+  const tutorial = await getPublishedTutorial(level);
 
   if (!tutorial) {
     notFound();
@@ -92,19 +89,20 @@ export default async function LevelPage({ params }: LevelPageProps) {
     surface: lessonTheme.surface,
   };
 
-  const supabase = await createClient();
-  const { data: claimsData } = await supabase.auth.getClaims();
-  const userId = claimsData?.claims?.sub;
+  const memberSession = await getYweMemberSession();
+  const userId = memberSession.signedIn || devAccessPreview.signedIn
+    ? "shared-ywe-member"
+    : null;
 
   if (
     !userId &&
-    !isDevAccountOverride &&
+    !devAccessPreview.signedIn &&
     cookieStore.get(WELCOME_COMPLETED_COOKIE)?.value !== "1"
   ) {
     return <LevelGate tutorial={tutorial} theme={detailTheme} state="Start Here required" body="The welcome experience comes first. Finish it once, then create or enter your shared Yoga With Ethan account to open Level 1." action={<><DetailGatePrimary href={`/welcome?next=/levels/${tutorial.level}`}>Begin Start Here</DetailGatePrimary><DetailGateSecondary>Back</DetailGateSecondary></>} icon="spark" />;
   }
 
-  if (!userId && !isDevAccountOverride) {
+  if (!userId) {
     return (
       <LevelGate
         tutorial={tutorial}
@@ -125,36 +123,21 @@ export default async function LevelPage({ params }: LevelPageProps) {
     );
   }
 
-  const { data: profile } = userId
-    ? await supabase
-        .from("profiles")
-        .select("welcome_completed_at,onboarding_completed_at")
-        .eq("id", userId)
-        .single()
-    : { data: null };
+  const profile = memberSession.profile;
 
-  if (!isDevAccountOverride && !profile?.welcome_completed_at) {
+  if (!isDevProgressOverride && !profile?.welcomeCompletedAt) {
     return <LevelGate tutorial={tutorial} theme={detailTheme} state="Start Here required" body="Complete the welcome experience before opening the first level. You only need to do this once." action={<><DetailGatePrimary href={`/welcome?next=/levels/${tutorial.level}`}>Continue Start Here</DetailGatePrimary><DetailGateSecondary>Back</DetailGateSecondary></>} icon="spark" />;
   }
 
-  if (!isDevAccountOverride && !profile?.onboarding_completed_at) {
+  if (!isDevProgressOverride && !profile?.onboardingCompletedAt) {
     return <LevelGate tutorial={tutorial} theme={detailTheme} state="One last step" body="Set your starting preferences so the User Manual can keep your place and send only the reminders you want." action={<><DetailGatePrimary href={`/onboarding?next=/levels/${tutorial.level}`}>Finish account setup</DetailGatePrimary><DetailGateSecondary>Back</DetailGateSecondary></>} icon="account" />;
   }
 
-  const { entitled: realEntitled } = isDevPremiumOverride
-    ? { entitled: false }
-    : await getUserManualEntitlement();
-  const entitled = realEntitled || isDevPremiumOverride;
-
-  const { data: progress } = userId
-    ? await supabase
-        .from("tutorial_progress")
-        .select("level_number,status")
-        .eq("user_id", userId)
-        .eq("product_slug", USER_MANUAL_PRODUCT_SLUG)
-    : { data: null };
-
-  const realCompletedLevelCount = contiguousCompletedLevelCount(progress ?? []);
+  const entitled = Boolean(memberSession.access?.entitled) || devAccessPreview.entitled;
+  const progress = memberSession.access?.levelProgress ?? [];
+  const realCompletedLevelCount = progress.filter(
+    (item) => item.status === "completed",
+  ).length;
   const completedLevelCount = devCompletedLevelCount(
     devProgressMode,
     realCompletedLevelCount,
@@ -164,26 +147,16 @@ export default async function LevelPage({ params }: LevelPageProps) {
     return <LevelGate tutorial={tutorial} theme={detailTheme} state="Progression locked" body={`Complete Level ${completedLevelCount + 1} before opening Level ${tutorial.level}. Purchase never skips the free level sequence.`} action={<><DetailGatePrimary href={`/levels/${completedLevelCount + 1}`}>Continue with Level {completedLevelCount + 1}</DetailGatePrimary><DetailGateSecondary>Back to the roadmap</DetailGateSecondary></>} icon="lock" />;
   }
 
-  const db = supabase as any;
-  const [{ data: comments }, { data: practices }] = await Promise.all([
-    entitled && !isDevDataPreview
-      ? db
-          .from("lesson_questions")
-          .select("id,body,is_resolved,created_at,profiles(display_name),lesson_answers(id,body,is_teacher_answer,created_at,profiles(display_name))")
-          .eq("product_slug", USER_MANUAL_PRODUCT_SLUG)
-          .eq("tutorial_level", tutorial.level)
-          .eq("is_public", true)
-          .order("created_at", { ascending: false })
-      : Promise.resolve({ data: null }),
-    isDevDataPreview
-      ? Promise.resolve({ data: [] })
-      : db
-          .from("practices")
-          .select("id,title,description,duration_minutes,media_kind")
-          .eq("unlock_level", tutorial.level)
-          .eq("is_published", true)
-          .order("sort_order", { ascending: true }),
-  ]);
+  const commentsResponse = entitled && memberSession.signedIn
+    ? await callYweMemberApi(`/api/lessons/${tutorial.level}/comments`)
+    : null;
+  const commentsPayload = commentsResponse?.ok
+    ? await commentsResponse.json() as { comments?: any[] }
+    : null;
+  const comments = commentsPayload?.comments ?? [];
+  const practices = practiceUniverses
+    .filter((universe) => universe.unlockAfterLevel === tutorial.level)
+    .flatMap((universe) => getUniversePractices(universe.slug));
   const levelCompleted = progress?.some((item) => item.level_number === tutorial.level && item.status === "completed") ?? false;
   const stepSections = tutorial.sections.filter(isStepSection);
   const navigableSections = stepSections.length
@@ -193,10 +166,18 @@ export default async function LevelPage({ params }: LevelPageProps) {
     : tutorial.sections
         .filter((section) => !sectionChecklistItems(section).length)
         .slice(0, 6);
-  const chapters = navigableSections.map((section) => ({
-    id: section.id,
-    label: plainTitle(section.title),
-  }));
+  const chapterSections = tutorial.level === 1 ? tutorial.sections : navigableSections;
+  const chapters = [
+    { id: "video", kind: "video" as const, label: "Video" },
+    ...chapterSections.map((section) => ({
+      id: section.id,
+      kind: "chapter" as const,
+      label: plainTitle(section.title),
+    })),
+    { id: "complete", kind: "complete" as const, label: `Complete Level ${tutorial.level}` },
+    { id: "faq", kind: "faq" as const, label: "Frequently asked questions" },
+    { id: "practices", kind: "practice" as const, label: "Practice" },
+  ];
   const firstStepIndex = tutorial.sections.findIndex(isStepSection);
   const readinessSections = tutorial.sections.filter(
     (section, index) =>
@@ -241,30 +222,35 @@ export default async function LevelPage({ params }: LevelPageProps) {
                   />
                 );
               }
-            } else if (checklistItems.length) {
-              content = (
-                <InteractiveChecklist
-                  heading={plainTitle(section.title)}
-                  id={section.id}
-                  intro="Use this as a working reflection, not a requirement. Every item can be checked and unchecked."
-                  items={checklistItems}
-                  storageKey={`level-${tutorial.level}-${section.id}`}
-                />
-              );
             } else {
               content = (
-                <DetailSection id={section.id} title={plainTitle(section.title)}>
-                  <div className="space-y-6">
-                    <MarkdownContent blocks={section.paragraphs} />
-                  </div>
-                </DetailSection>
+                <>
+                  <DetailSection compactAfter={checklistItems.length > 0} id={section.id} title={plainTitle(section.title)}>
+                    <div>
+                      <MarkdownContent
+                        blocks={sectionCopyBlocks(section)}
+                        footnotes={section.footnotes ?? []}
+                      />
+                    </div>
+                  </DetailSection>
+                  {checklistItems.length ? (
+                    <InteractiveChecklist
+                      embedded
+                      heading="Mastery Checklist"
+                      id={`${section.id}-checklist`}
+                      intro="Keep this beside the technique as a private working reflection. Check and uncheck anything as your practice changes."
+                      items={checklistItems}
+                      storageKey={`level-${tutorial.level}-${section.id}`}
+                    />
+                  ) : null}
+                </>
               );
             }
 
             return (
               <div key={section.id}>
                 {content}
-                {index === 1 && (
+                {tutorial.level !== 1 && index === 1 && (
                   <>
                     <MediaBlocks media={tutorial.media} accent={lessonTheme.accent} />
                     <Footnotes footnotes={tutorial.footnotes} />
@@ -273,6 +259,8 @@ export default async function LevelPage({ params }: LevelPageProps) {
               </div>
             );
           })}
+
+          <LevelCompletion initiallyComplete={levelCompleted} level={tutorial.level} />
 
           <section id="faq" className="scroll-mt-12 pt-16">
             <h2 className="text-[32px] font-bold text-[#111111]" style={{ fontFamily: lessonTheme.fonts.heading }}>
@@ -293,22 +281,20 @@ export default async function LevelPage({ params }: LevelPageProps) {
             level={tutorial.level}
           />
 
-          <AssociatedPractices practices={(practices ?? []).map((practice: any) => ({
+          <AssociatedPractices practices={practices.map((practice) => ({
             description: practice.description,
-            duration: practice.duration_minutes,
-            href: entitled ? `/api/practices/${practice.id}/media` : "/paid?feature=practice",
+            duration: practice.durationMinutes,
+            href: entitled
+              ? `/universes/${practice.universeSlug}/practices/${practice.id}`
+              : "/paid?feature=practice",
             id: practice.id,
-            kind: practice.media_kind,
+            kind: practice.kind,
             title: practice.title,
           }))} />
           {!hasAuthoredChecklists ? (
             <InteractiveChecklist items={tutorial.checklist} storageKey={`level-${tutorial.level}`} />
           ) : null}
 
-          <section id="complete" className={`${detailStyles.section} ${detailStyles.completeZone}`}>
-            <p>{levelCompleted ? "Level complete. The next level in the sequence is now available." : "Completing a level is always your choice. The checklist is not required."}</p>
-            {levelCompleted ? <button type="button" disabled aria-disabled="true">Completed</button> : <form action={completeLevel}><input type="hidden" name="level" value={tutorial.level} /><button type="submit">Complete level</button></form>}
-          </section>
         </DetailArticle>
       </DetailExperience>
     </ThemeProvider>
@@ -328,6 +314,9 @@ function isStepSection(section: TutorialSection) {
 function sectionChecklistItems(
   section: TutorialSection,
 ): InteractiveChecklistItem[] {
+  if (section.checklist?.length) {
+    return section.checklist.map((text) => ({ complete: false, text }));
+  }
   return section.paragraphs.flatMap((paragraph) =>
     paragraph.split("\n").flatMap((line) => {
       const match = line.match(/^\s*[-*]\s+\[([ xX])\]\s+(.+?)\s*$/);
@@ -340,6 +329,15 @@ function sectionChecklistItems(
       ];
     }),
   );
+}
+
+function sectionCopyBlocks(section: TutorialSection): string[] {
+  return section.paragraphs.flatMap((paragraph) => {
+    const lines = paragraph.split("\n").filter(
+      (line) => !/^\s*[-*]\s+\[[ xX]\]\s+/.test(line),
+    );
+    return lines.length ? [lines.join("\n")] : [];
+  });
 }
 
 function LevelGate({ action, body, headline, icon, state, theme, tutorial }: {
@@ -370,50 +368,6 @@ function LevelGate({ action, body, headline, icon, state, theme, tutorial }: {
   );
 }
 
-async function completeLevel(formData: FormData) {
-  "use server";
-
-  const level = Number(formData.get("level"));
-  const tutorial = getTutorial(String(level));
-  const supabase = await createClient();
-  const { data: claimsData } = await supabase.auth.getClaims();
-  const userId = claimsData?.claims?.sub;
-
-  if (!userId || !Number.isFinite(level) || !tutorial) {
-    redirect(`/login?next=/levels/${level || 1}`);
-  }
-
-  const { data: progress } = await supabase
-    .from("tutorial_progress")
-    .select("level_number,status")
-    .eq("user_id", userId)
-    .eq("product_slug", USER_MANUAL_PRODUCT_SLUG);
-
-  const completedLevelCount = contiguousCompletedLevelCount(progress ?? []);
-
-  if (level > completedLevelCount + 1) {
-    redirect("/");
-  }
-
-  await supabase.from("tutorial_progress").upsert(
-    {
-      user_id: userId,
-      product_slug: USER_MANUAL_PRODUCT_SLUG,
-      level_number: level,
-      status: "completed",
-      started_at: new Date().toISOString(),
-      completed_at: new Date().toISOString(),
-    },
-    {
-      onConflict: "user_id,product_slug,level_number",
-    },
-  );
-
-  revalidatePath("/");
-  revalidatePath(`/levels/${level}`);
-  redirect("/");
-}
-
 async function submitLessonComment(formData: FormData) {
   "use server";
 
@@ -429,25 +383,15 @@ async function submitLessonComment(formData: FormData) {
     redirect(`/paid?feature=comments`);
   }
 
-  const supabase = await createClient();
-  const { data: claimsData } = await supabase.auth.getClaims();
-  const userId = claimsData?.claims?.sub;
-
-  if (!userId) {
-    redirect(`/login?next=/levels/${level || 1}`);
-  }
-
   if (!Number.isInteger(level) || level < 1 || body.length < 3 || body.length > 2000) {
     redirect(`/levels/${Number.isInteger(level) && level > 0 ? level : 1}#comments`);
   }
 
-  await supabase.from("lesson_questions").insert({
-    body,
-    is_public: true,
-    product_slug: USER_MANUAL_PRODUCT_SLUG,
-    tutorial_level: level,
-    user_id: userId,
+  const response = await callYweMemberApi(`/api/lessons/${level}/comments`, {
+    body: JSON.stringify({ body }),
+    method: "POST",
   });
+  if (!response.ok) redirect(`/levels/${level}?error=comment#comments`);
 
   revalidatePath(`/levels/${level}`);
   redirect(`/levels/${level}#comments`);

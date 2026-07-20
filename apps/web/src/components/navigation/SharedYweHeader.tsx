@@ -5,10 +5,18 @@ import { usePathname } from "next/navigation";
 
 import { useAuth } from "@/lib/settings/AuthContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
+import { observeDirectionalTopChrome } from "@/components/ui/useDirectionalTopChrome";
 
 const SHARED_COMPONENT_LOADER_URL = "/shared-components/loader.js";
 const USER_MANUAL_AUTH_STYLE_ID = "user-manual-auth-skin";
 const USER_MANUAL_AUTH_STYLES = `
+  :host([detail-page]) .bar {
+    border-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  :host([detail-page]) .mobile-top { display: none !important; }
+  :host([detail-page]) .mt-title-group { display: none !important; }
   .auth-scrim {
     z-index: 20119 !important;
     background: rgba(18, 18, 24, .42) !important;
@@ -125,6 +133,7 @@ type SharedComponentPlatform = {
 
 declare global {
   interface Window {
+    YWEUserManualChapters?: Array<{ href: string; label: string; active?: boolean }>;
     YWESharedComponents?: SharedComponentPlatform;
   }
 }
@@ -140,12 +149,13 @@ function installUserManualAuthSkin(header: SharedHeaderElement) {
 
 export function SharedYweHeader() {
   const [ready, setReady] = useState(false);
+  const [chapterItems, setChapterItems] = useState<Array<{ href: string; label: string; active?: boolean }>>([]);
   const { entitled, ready: authReady, user } = useAuth();
   const { devSimulateSignedIn, ready: settingsReady, update } = useSettings();
   const headerRef = useRef<SharedHeaderElement | null>(null);
   const pathname = usePathname();
   const isDetailPage = /^\/(levels|universes)\//.test(pathname);
-  const enabled = !pathname.startsWith("/ui-lab") && !isDetailPage;
+  const enabled = !pathname.startsWith("/ui-lab");
   const signedIn = Boolean(user || devSimulateSignedIn);
   const accountRequired = authReady && settingsReady && pathname === "/" && !signedIn;
   const setHeaderRef = useCallback((header: SharedHeaderElement | null) => {
@@ -189,10 +199,12 @@ export function SharedYweHeader() {
   useEffect(() => {
     if (!ready || !enabled) return;
     document.documentElement.dataset.yweSharedHeader = "";
+    if (isDetailPage) document.documentElement.dataset.yweDetailHeader = "";
     return () => {
       delete document.documentElement.dataset.yweSharedHeader;
+      delete document.documentElement.dataset.yweDetailHeader;
     };
-  }, [enabled, ready]);
+  }, [enabled, isDetailPage, ready]);
 
   useEffect(() => {
     if (!ready || !enabled) return;
@@ -205,13 +217,66 @@ export function SharedYweHeader() {
 
   useEffect(() => {
     if (!ready || !enabled) return;
+    const cleanup = observeDirectionalTopChrome((hidden) => {
+      headerRef.current?.classList.toggle("is-hidden", hidden);
+    });
+    return () => {
+      cleanup();
+      headerRef.current?.classList.remove("is-hidden");
+    };
+  }, [enabled, ready]);
+
+  useEffect(() => {
+    if (!isDetailPage) {
+      setChapterItems([]);
+      return;
+    }
+    const syncChapters = (event?: Event) => {
+      const detail = (event as CustomEvent<{ items?: Array<{ href: string; label: string; active?: boolean }> }> | undefined)?.detail;
+      setChapterItems(detail?.items ?? window.YWEUserManualChapters ?? []);
+    };
+    syncChapters();
+    document.addEventListener("um:chapters-change", syncChapters);
+    return () => document.removeEventListener("um:chapters-change", syncChapters);
+  }, [isDetailPage, pathname]);
+
+  useEffect(() => {
+    if (!ready || !enabled) return;
     if (accountRequired) headerRef.current?.setAttribute("auth-required", "");
     else headerRef.current?.removeAttribute("auth-required");
-    headerRef.current?.configure?.({
+    const shared = {
       active: "tutorial",
       userManualAccess: entitled,
+      account: false,
+      mobileBottom: false,
+    };
+    headerRef.current?.configure?.(isDetailPage ? {
+      ...shared,
+      preset: "immersive-detail",
+      back: { mode: "auto", href: "/" },
+      actions: chapterItems.length ? [{
+        icon: "sidebar",
+        label: "Chapters",
+        tip: "Chapters",
+        panel: "chapters",
+        mobileOnly: true,
+      }] : [],
+      panels: chapterItems.length ? {
+        chapters: { title: "Chapters", layout: "immersive-chapters", items: chapterItems },
+      } : {},
+    } : {
+      ...shared,
+      preset: "immersive",
+      actions: [{
+        icon: "settings",
+        label: "Settings",
+        tip: "Settings",
+        href: "#settings",
+        event: "um:open-settings",
+      }],
+      panels: {},
     });
-  }, [accountRequired, enabled, entitled, ready, signedIn]);
+  }, [accountRequired, chapterItems, enabled, entitled, isDetailPage, ready, signedIn]);
 
   useEffect(() => {
     const syncTheme = (event: Event) => {
@@ -222,17 +287,26 @@ export function SharedYweHeader() {
     return () => window.removeEventListener("yweThemeChange", syncTheme);
   }, [update]);
 
+  useEffect(() => {
+    const openAuth = (event: Event) => {
+      const mode = (event as CustomEvent<{ mode?: string }>).detail?.mode === "signup"
+        ? "signup"
+        : "signin";
+      const header = headerRef.current;
+      const trigger = header?.shadowRoot?.querySelector<HTMLElement>(`[data-auth="${mode}"]`);
+      trigger?.click();
+    };
+    window.addEventListener("yweOpenAuth", openAuth);
+    return () => window.removeEventListener("yweOpenAuth", openAuth);
+  }, []);
+
   if (!ready || !enabled) return null;
 
   return createElement("drsti-header", {
     active: "tutorial",
     "auth-required": accountRequired ? "" : undefined,
-    "hide-account": "",
-    "hide-center": "",
-    "hide-mobile-bottom": "",
-    "hide-mobile-top": "",
+    "detail-page": isDetailPage ? "" : undefined,
     ref: setHeaderRef,
-    "show-bar-mobile": "",
     "user-manual-access": String(entitled),
   });
 }

@@ -20,13 +20,17 @@ import {
 import styles from "./PurchaseDisclosure.module.css";
 
 interface PurchaseDisclosureProps {
+  className?: string;
   defaultOpen?: boolean;
-  primaryHref: string;
+  onPrimaryAction?: () => void;
+  primaryHref?: string;
   primaryLabel?: string;
 }
 
 export function PurchaseDisclosure({
+  className,
   defaultOpen = false,
+  onPrimaryAction,
   primaryHref,
   primaryLabel = "Unlock full access",
 }: PurchaseDisclosureProps) {
@@ -36,7 +40,7 @@ export function PurchaseDisclosure({
 
   return (
     <section
-      className={`${styles.root} ${expanded ? styles.expanded : ""}`}
+      className={`${styles.root} ${expanded ? styles.expanded : ""} ${className ?? ""}`}
       data-purchase-disclosure
       data-state={expanded ? "expanded" : "collapsed"}
       aria-label={`${USER_MANUAL_PRICE_LABEL} lifetime companion`}
@@ -62,9 +66,15 @@ export function PurchaseDisclosure({
           {USER_MANUAL_PRICE_LABEL}
         </span>
 
-        <Link className={styles.primaryAction} href={primaryHref}>
-          {primaryLabel}
-        </Link>
+        {onPrimaryAction ? (
+          <button className={styles.primaryAction} onClick={onPrimaryAction} type="button">
+            {primaryLabel}
+          </button>
+        ) : (
+          <Link className={styles.primaryAction} href={primaryHref ?? "/paid"}>
+            {primaryLabel}
+          </Link>
+        )}
 
         <button
           type="button"
@@ -103,9 +113,15 @@ export function PurchaseDisclosure({
           </ul>
 
           <div className={styles.mobileActions}>
-            <Link className={styles.primaryAction} href={primaryHref}>
-              {primaryLabel}
-            </Link>
+            {onPrimaryAction ? (
+              <button className={styles.primaryAction} onClick={onPrimaryAction} type="button">
+                {primaryLabel}
+              </button>
+            ) : (
+              <Link className={styles.primaryAction} href={primaryHref ?? "/paid"}>
+                {primaryLabel}
+              </Link>
+            )}
           </div>
         </div>
       </div>

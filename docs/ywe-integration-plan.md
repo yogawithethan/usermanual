@@ -12,11 +12,16 @@ Do not deploy the standalone User Manual Supabase migrations for member
 identity, progress, entitlements, comments, or release notifications. They are
 useful as domain prototypes and migration inputs only.
 
+The machine-readable Goal 1 safety state lives at the repository-relative path
+`docs/USER_MANUAL_FOUNDATION_GATES.json`. Its
+production, remote-migration, customer-import, and D1 product-write flags must
+remain false throughout this goal.
+
 ## Canonical ownership
 
 | Concern | Canonical owner |
 | --- | --- |
-| Login and session | Existing Yoga With Ethan passwordless email session |
+| Login and session | Islands plus the shared Yoga With Ethan cookie |
 | Member identity link | Yoga With Ethan D1 |
 | Purchases and entitlements | Yoga With Ethan D1, populated by verified Stripe webhooks |
 | Current level/tutorial progress | Yoga With Ethan D1 |
@@ -33,7 +38,7 @@ Add an immutable identity bridge instead of joining product data by email:
 ```sql
 member_accounts (
   id INTEGER PRIMARY KEY,
-  islands_user_id TEXT UNIQUE,
+  islands_user_id TEXT UNIQUE NOT NULL,
   subscriber_id INTEGER UNIQUE NOT NULL,
   email_normalized TEXT NOT NULL,
   welcome_completed_at INTEGER,
@@ -42,14 +47,14 @@ member_accounts (
 )
 ```
 
-At launch, the existing Yoga With Ethan email-link callback resolves or creates
-the D1 subscriber and mints the shared session. A later Islands callback may
-persist an Islands subject link to that same record. Email changes update
-contact data without changing the member's progress identity.
+On a successful Islands callback, the Worker resolves or creates the D1
+subscriber from the verified email, persists the Islands subject link, and then
+mints the existing shared session. Email changes update contact data without
+changing the member's progress identity.
 
-Existing member magic-link sessions are the launch path. When Islands is added
-later, both mechanisms must resolve to this same member record and must not
-create two identity authorities.
+During migration, existing member magic-link sessions may be accepted as a
+compatibility path, but they must resolve to this same member record. They must
+not create a second identity authority.
 
 ## D1 product records
 
@@ -89,7 +94,7 @@ suppression, pacing, quiet-hour, collision, and delivery-ledger rules.
 
 1. Register the User Manual as a governed Yoga With Ethan deploy unit and move
    the Next project without changing its visual behavior.
-2. Resolve the existing Yoga With Ethan member session to one D1 member record.
+2. Add the D1 identity bridge and make Islands login resolve one member record.
 3. Add D1 progress, activity, release-interest, and nudge-state migrations plus
    Worker APIs and contract tests.
 4. Repoint the web app's session, progression, comments, and entitlement calls
@@ -97,8 +102,6 @@ suppression, pacing, quiet-hour, collision, and delivery-ledger rules.
 5. Import existing User Manual customer state once, verify counts and sampled
    records, then disable old writes. Never run two canonical writers.
 6. Connect lifecycle events to the shared email and Telegram scheduler.
-7. Add Islands SSO only after launch auth is stable, linking it to the existing
-   member record rather than replacing or duplicating it.
-8. Migrate structured content and protected media independently.
-9. Run authenticated, paid, refunded, coming-soon, reminder, mobile-layout, and
+7. Migrate structured content and protected media independently.
+8. Run authenticated, paid, refunded, coming-soon, reminder, mobile-layout, and
    reduced-motion end-to-end tests before production cutover.

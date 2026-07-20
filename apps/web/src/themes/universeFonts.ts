@@ -3,11 +3,11 @@ import {
   Amaranth,
   Lexend_Deca,
   Lexend_Exa,
-  Lobster,
+  Pacifico,
   Quicksand,
 } from "next/font/google";
 
-const lobster = Lobster({
+const pacifico = Pacifico({
   subsets: ["latin"],
   weight: "400",
   variable: "--font-wtfu-primary",
@@ -50,7 +50,7 @@ const quicksand = Quicksand({
 });
 
 export const universeFontClassName = [
-  lobster.variable,
+  pacifico.variable,
   alegreyaSans.variable,
   amaranth.variable,
   lexendExa.variable,

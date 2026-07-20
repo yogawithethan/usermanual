@@ -1,20 +1,17 @@
-import { NextResponse } from "next/server";
+import { getYweWorkerOrigin } from "@/lib/ywe-member-api";
 
-import { getStripeReadiness } from "@/lib/stripe";
+export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const readiness = getStripeReadiness();
-  const ready =
-    readiness.hasSecretKey &&
-    readiness.hasWebhookSecret &&
-    readiness.hasPriceId &&
-    (process.env.NODE_ENV !== "production" || readiness.hasLiveSecretKey);
-
-  return NextResponse.json(
-    {
-      ready,
-      stripe: readiness,
+  const response = await fetch(`${getYweWorkerOrigin()}/api/member/session?health=checkout`, {
+    cache: "no-store",
+    headers: { accept: "application/json" },
+  });
+  return new Response(await response.text(), {
+    headers: {
+      "Cache-Control": "no-store",
+      "Content-Type": response.headers.get("content-type") ?? "application/json",
     },
-    { status: ready ? 200 : 503 },
-  );
+    status: response.status,
+  });
 }

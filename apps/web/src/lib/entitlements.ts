@@ -1,35 +1,28 @@
-import { createClient } from "@/lib/supabase/server";
+import { getYweMemberSession } from "@/lib/ywe-member-api";
+import { getDevAccessPreview } from "@/lib/dev-access-preview";
 
 export const USER_MANUAL_PRODUCT_SLUG = "the-user-manual";
 
 export async function getUserManualEntitlement() {
-  const supabase = await createClient();
-  const { data: claimsData } = await supabase.auth.getClaims();
-  const userId = claimsData?.claims?.sub;
+  const [memberSession, preview] = await Promise.all([
+    getYweMemberSession(),
+    getDevAccessPreview(),
+  ]);
+  const realSignedIn = memberSession.signedIn;
+  const previewSignedIn = preview.enabled && preview.signedIn;
+  const previewEntitled = preview.enabled && preview.fullAccess;
 
-  if (!userId) {
-    return { entitled: false, userId: null };
-  }
-
-  const { data, error } = await supabase
-    .from("product_entitlements")
-    .select("id,status,ends_at")
-    .eq("user_id", userId)
-    .eq("product_slug", USER_MANUAL_PRODUCT_SLUG)
-    .eq("status", "active");
-
-  if (error) {
-    console.warn("[entitlements] lookup failed", error.message);
-  }
-
-  const now = Date.now();
-  const entitled = Boolean(
-    data?.some((entitlement) => {
-      if (!entitlement.ends_at) return true;
-      const endsAt = new Date(entitlement.ends_at).getTime();
-      return Number.isFinite(endsAt) && endsAt > now;
-    }),
-  );
-
-  return { entitled, userId };
+  return {
+    email: realSignedIn ? memberSession.member?.email ?? null : null,
+    entitled: Boolean(
+      (realSignedIn && memberSession.access?.entitled) || previewEntitled,
+    ),
+    isPreview: previewSignedIn && !realSignedIn,
+    purchaseEnabled: Boolean(
+      (realSignedIn && memberSession.capabilities?.purchaseEnabled) || previewSignedIn,
+    ),
+    realSignedIn,
+    signedIn: realSignedIn || previewSignedIn,
+    userId: realSignedIn ? "shared-ywe-member" : previewSignedIn ? "dev-preview" : null,
+  };
 }

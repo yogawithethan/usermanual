@@ -1,5 +1,4 @@
 import type { TutorialSection } from "./tutorials";
-
 /**
  * Generated from Ethan's canonical Notion pages on 2026-07-16.
  * Text is preserved as authored; expiring Notion image URLs are intentionally

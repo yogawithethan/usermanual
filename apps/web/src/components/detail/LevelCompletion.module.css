@@ -1,0 +1,22 @@
+.panel { display: flex; gap: 24px; align-items: center; justify-content: space-between; margin-top: clamp(56px, 10vw, 100px); padding: 22px 24px; border: 1.5px solid var(--detail-accent); border-radius: 42px; corner-shape: squircle; background: transparent; color: var(--detail-ink); }
+.panel > span { display: grid; gap: 4px; text-align: left; }
+.panel strong { font: 800 clamp(1.05rem, 3vw, 1.3rem)/1.15 var(--detail-heading-font); }
+.panel small { color: color-mix(in srgb, var(--detail-ink) 62%, transparent); font-size: .86rem; line-height: 1.45; }
+.panel em { color: #a62b3b; font-size: .78rem; font-style: normal; font-weight: 700; }
+
+.confetti { position: fixed; z-index: 150; inset: 0; overflow: hidden; pointer-events: none; }
+.confetti i { position: absolute; top: -24px; left: var(--confetti-left); width: 9px; height: 15px; border-radius: 4px; background: var(--detail-accent); opacity: 0; transform: rotate(var(--confetti-rotation)); animation: rain var(--confetti-duration) cubic-bezier(.18,.78,.24,1) var(--confetti-delay) both; }
+.confetti .tone0 { background: #ff5b8d; }.confetti .tone1 { background: #ffd048; }.confetti .tone2 { background: #54d8c3; }.confetti .tone3 { background: #7c72f5; }.confetti .tone4 { background: #ff8a5c; }.confetti .tone5 { background: #4f98ef; }
+@keyframes rain { 0% { opacity: 0; transform: translate3d(0,-4vh,0) rotate(var(--confetti-rotation)); } 8% { opacity: 1; } 100% { opacity: .9; transform: translate3d(45px, calc(100dvh + 80px),0) rotate(calc(var(--confetti-rotation) + 900deg)); } }
+
+.dialog { position: fixed; z-index: 160; inset: 0; display: grid; place-items: center; padding: 22px; background: rgb(17 17 17 / 34%); backdrop-filter: blur(9px); }
+.card { display: grid; width: min(480px, 100%); justify-items: center; padding: clamp(28px, 7vw, 48px); border: 1px solid rgb(255 255 255 / 86%); border-radius: 52px; corner-shape: squircle; background: linear-gradient(135deg, rgb(255 255 255 / 96%), color-mix(in srgb, var(--detail-accent-soft) 54%, white)); box-shadow: 0 28px 90px rgb(12 19 45 / 24%); text-align: center; }
+.eyebrow { margin: 20px 0 8px; color: var(--detail-accent); font: 800 .72rem/1 var(--ui-font-label); letter-spacing: .13em; text-transform: uppercase; }
+.card h2 { margin: 0; font: 800 clamp(1.8rem, 6vw, 2.5rem)/1.05 var(--detail-heading-font); }
+.card > p:not(.eyebrow) { max-width: 34ch; margin: 16px auto 24px; color: color-mix(in srgb, var(--detail-ink) 67%, transparent); line-height: 1.55; }
+.card > a { display: flex; width: 100%; min-height: 54px; align-items: center; justify-content: center; gap: 10px; border-radius: 999px; background: var(--detail-accent); color: white; font-weight: 800; text-decoration: none; }
+.card > a span { transition: transform 180ms ease; }.card > a:hover span { transform: translateX(3px); }
+.card > button { margin-top: 16px; border: 0; background: transparent; color: var(--detail-ink); font: 750 .9rem/1 var(--ui-font-label); cursor: pointer; }
+
+@media (max-width: 560px) { .panel { gap: 14px; padding: 18px; } .panel small { max-width: 28ch; } }
+@media (prefers-reduced-motion: reduce) { .confetti i { animation-duration: 1ms; } .card > a span { transition: none; } }

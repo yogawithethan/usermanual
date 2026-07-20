@@ -11,10 +11,7 @@ export function PurchaseUnlockCard() {
   const { user } = useAuth();
   const { devSimulateSignedIn, purchased } = useSettings();
   const signedIn = Boolean(user || devSimulateSignedIn);
-  const next = pathname?.startsWith("/") ? pathname : "/";
-  const primaryHref = signedIn
-    ? "/paid?feature=full-tutorial"
-    : `/login?next=${encodeURIComponent(next)}`;
+  const primaryHref = "/paid?feature=full-tutorial";
   const excluded = ["/login", "/paid", "/ui-lab", "/welcome", "/onboarding"]
     .some((route) => pathname?.startsWith(route));
 
@@ -26,7 +23,10 @@ export function PurchaseUnlockCard() {
     <div className="pointer-events-none fixed inset-x-0 bottom-4 z-[20005] flex justify-center px-4 sm:bottom-5">
       <div className="pointer-events-auto w-full max-w-[70rem]">
         <PurchaseDisclosure
-          primaryHref={primaryHref}
+          primaryHref={signedIn ? primaryHref : undefined}
+          onPrimaryAction={signedIn
+            ? undefined
+            : () => window.dispatchEvent(new CustomEvent("yweOpenAuth", { detail: { mode: "signin" } }))}
           primaryLabel={signedIn ? "Unlock full access" : "Log in or sign up"}
         />
       </div>

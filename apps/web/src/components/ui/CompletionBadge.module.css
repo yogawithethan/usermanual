@@ -1,0 +1,83 @@
+.root {
+  align-items: center;
+  appearance: none;
+  background: var(--theme-color-surface-raised);
+  border: 1px solid var(--theme-color-border);
+  border-radius: 999px;
+  box-shadow: 0 6px 18px rgba(20, 20, 20, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.82);
+  color: var(--theme-color-ink-strong);
+  cursor: pointer;
+  display: inline-flex;
+  height: var(--ui-control-icon);
+  justify-content: center;
+  padding: 0;
+  position: relative;
+  transition: transform var(--ui-motion-fast) var(--ui-motion-ease), box-shadow var(--ui-motion-standard) ease, color var(--ui-motion-fast) ease;
+  width: var(--ui-control-icon);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.root:hover {
+  box-shadow: 0 3px 8px color-mix(in srgb, var(--theme-color-accent) 10%, rgba(20, 20, 20, 0.06));
+  transform: translateY(-1px);
+}
+
+.root:active { transform: translateY(0) scale(0.97); }
+
+.root:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--theme-color-focus) 32%, transparent);
+  outline-offset: 3px;
+}
+
+.seal {
+  height: 1.8rem;
+  overflow: visible;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.75;
+  width: 1.8rem;
+}
+
+.badgeShape { fill: transparent; }
+.incomplete { color: var(--theme-color-ink-strong); }
+.incomplete .check { opacity: 1; }
+.complete { color: var(--theme-color-accent); }
+.complete .badgeShape { fill: currentColor; }
+.complete .check { opacity: 1; stroke: var(--theme-color-surface-raised); }
+
+.tooltip {
+  background: var(--theme-color-ink-strong);
+  border-radius: 0.5rem;
+  bottom: calc(100% + 0.55rem);
+  color: var(--theme-color-surface-raised);
+  display: block;
+  font-family: var(--ui-font-label);
+  font-size: var(--ui-type-caption);
+  font-weight: 700;
+  left: 50%;
+  line-height: 1.2;
+  opacity: 0;
+  padding: 0.4rem 0.55rem;
+  pointer-events: none;
+  position: absolute;
+  transform: translate(-50%, 0.25rem);
+  transition: opacity var(--ui-motion-fast) ease, transform var(--ui-motion-fast) var(--ui-motion-ease);
+  visibility: hidden;
+  white-space: nowrap;
+  z-index: var(--ui-layer-tooltip);
+}
+
+.root:hover .tooltip,
+.root:focus-visible .tooltip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  visibility: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root,
+  .tooltip { transition: none; }
+
+  .root:hover { transform: none; }
+}
