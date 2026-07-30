@@ -41,8 +41,13 @@ export async function proxyYweMemberApi(request: Request, path: string) {
     },
     method: request.method,
   });
+  const responseBody = request.method === "HEAD"
+    ? null
+    : response.status === 401
+      ? JSON.stringify({ error: "Authentication required" })
+      : await response.text();
 
-  return new Response(request.method === "HEAD" ? null : await response.text(), {
+  return new Response(responseBody, {
     status: response.status,
     headers: {
       "Cache-Control": response.headers.get("cache-control") ?? "private, no-store",
