@@ -179,6 +179,74 @@
 .benefit small { display: block; margin-top: .18rem; color: var(--offer-muted); font: 400 .63rem/1.42 var(--offer-ui); }
 .mobileActions { display: none; }
 
+.root.compact {
+  max-width: 28.75rem;
+  max-height: 9rem;
+  border-radius: 40px;
+}
+.root.compact.expanded { max-height: min(74dvh, 47.5rem); }
+.compact .summary {
+  grid-template-areas:
+    "emblem copy price toggle"
+    "action action action action";
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: .58rem;
+  min-height: 0;
+  padding: .72rem;
+}
+.compact .emblem { grid-area: emblem; width: 2.5rem; height: 2.5rem; }
+.compact .emblem svg { width: 1.15rem; height: 1.15rem; }
+.compact .summaryCopy { grid-area: copy; }
+.compact .summaryTitle { font-size: 1.12rem; }
+.compact .summaryDetail { max-width: none; font-size: .58rem; line-height: 1.36; }
+.compact .price { grid-area: price; font-size: 1.45rem; }
+.compact .summary > .primaryAction { grid-area: action; min-height: 3rem; }
+.compact .toggle { grid-area: toggle; width: 2.35rem; height: 2.35rem; }
+.compact.expanded .summary { padding-bottom: .6rem; }
+.compact.expanded .summary > .primaryAction { display: none; }
+.compact.expanded .reveal { max-height: calc(min(74dvh, 47.5rem) - 4.2rem); }
+.compact .revealInner { display: block; padding: .12rem .72rem calc(.78rem + env(safe-area-inset-bottom)); }
+.compact .expandedIntro { padding: .72rem .8rem; }
+.compact .benefits { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .48rem; margin-top: .55rem; }
+.compact .benefit { display: block; padding: .68rem; }
+.compact .benefitIcon { width: 1.75rem; height: 1.75rem; margin-bottom: .45rem; }
+.compact .benefit strong { font-size: .68rem; }
+.compact .benefit small { font-size: .56rem; }
+.compact .mobileActions { position: sticky; bottom: -1px; display: block; margin-top: .58rem; padding-top: .28rem; background: linear-gradient(180deg, transparent, rgb(248 244 240 / 76%) 36%); }
+.compact .mobileActions .primaryAction { width: 100%; min-height: 3rem; }
+
+:global(html[data-um-theme="dark"]) .root {
+  --offer-ink: #f4f4f5;
+  --offer-muted: #b0b3ba;
+  color-scheme: dark;
+  border-color: rgb(255 255 255 / 12%);
+  background: rgb(20 22 27 / 88%);
+  box-shadow: 0 14px 36px rgb(0 0 0 / 36%), inset 0 1px 0 rgb(255 255 255 / 8%);
+}
+
+:global(html[data-um-theme="dark"]) .root.expanded {
+  box-shadow: 0 18px 46px rgb(0 0 0 / 42%), inset 0 1px 0 rgb(255 255 255 / 9%);
+}
+
+:global(html[data-um-theme="dark"]) .texture { filter: saturate(.8) brightness(.42); opacity: .32; }
+:global(html[data-um-theme="dark"]) .sheen { opacity: .13; }
+
+:global(html[data-um-theme="dark"]) .emblem,
+:global(html[data-um-theme="dark"]) .toggle,
+:global(html[data-um-theme="dark"]) .expandedIntro,
+:global(html[data-um-theme="dark"]) .benefit,
+:global(html[data-um-theme="dark"]) .benefitIcon {
+  border-color: rgb(255 255 255 / 10%);
+  background: rgb(255 255 255 / 7%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 7%);
+  color: var(--offer-ink);
+}
+
+:global(html[data-um-theme="dark"]) .compact .mobileActions,
+:global(html[data-um-theme="dark"]) .mobileActions {
+  background: linear-gradient(180deg, transparent, rgb(20 22 27 / 94%) 36%);
+}
+
 @keyframes iridescent-drift {
   from { transform: scale(1.03) translate3d(-.5%, 0, 0); }
   to { transform: scale(1.055) translate3d(.5%, -.3%, 0); }

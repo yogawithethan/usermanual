@@ -97,6 +97,9 @@ importers:
       '@vimeo/player':
         specifier: ^2.30.4
         version: 2.30.4
+      lucide-react:
+        specifier: ^1.28.0
+        version: 1.28.0(react@19.2.4)
       next:
         specifier: 16.2.4
         version: 16.2.4(@playwright/test@1.61.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -3826,6 +3829,11 @@ packages:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-native: '*'
       react-native-svg: ^12.0.0 || ^13.0.0 || ^14.0.0 || ^15.0.0
+
+  lucide-react@1.28.0:
+    resolution: {integrity: sha512-fARAFJULsGuDDydjp6+6blekG/sBIM29TerzLjc9bQUKAcEfrSc4ZQKb25KRz4OMKd87cZTb5dgq0w/T6KufVg==}
+    peerDependencies:
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
@@ -9507,6 +9515,10 @@ snapshots:
       react: 19.2.0
       react-native: 0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0)
       react-native-svg: 15.15.3(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
+
+  lucide-react@1.28.0(react@19.2.4):
+    dependencies:
+      react: 19.2.4
 
   magic-string@0.30.21:
     dependencies:

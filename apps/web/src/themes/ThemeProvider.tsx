@@ -33,12 +33,18 @@ function themeToCssVars(theme: Theme): CSSProperties {
     "--theme-color-primary-from": theme.colors.primaryFrom,
     "--theme-color-primary-to": theme.colors.primaryTo,
     "--theme-color-surface": theme.colors.surface,
+    "--theme-color-surface-raised": "#ffffff",
+    "--theme-color-surface-soft": `color-mix(in srgb, ${theme.colors.surface} 72%, ${theme.colors.border})`,
     "--theme-color-ink": theme.colors.ink,
     "--theme-color-ink-strong": theme.colors.ink,
     "--theme-color-muted": theme.colors.muted,
     "--theme-color-border": theme.colors.border,
+    "--theme-color-accent": theme.colors.primaryFrom,
+    "--theme-color-on-accent": "#ffffff",
     "--theme-color-locked": theme.colors.locked,
     "--theme-color-completed": theme.colors.completed,
+    "--theme-color-danger": "#b42336",
+    "--theme-color-warning": "#a15c00",
     "--theme-color-focus": theme.colors.primaryFrom,
 
     "--theme-font-heading": theme.fonts.heading,
@@ -92,7 +98,7 @@ function themeToCssVars(theme: Theme): CSSProperties {
 
     // Default body font for the scope.
     fontFamily: theme.fonts.body,
-    color: theme.colors.ink,
+    color: "var(--theme-color-ink)",
   } as CSSProperties;
 }
 

@@ -111,6 +111,12 @@
   margin-top: 1.25rem;
 }
 
+:global(html[data-um-theme="dark"]) .heroIcon,
+:global(html[data-um-theme="dark"]) .unlockIcon {
+  background: color-mix(in srgb, var(--theme-color-accent) 18%, #181b21);
+  border-color: color-mix(in srgb, var(--theme-color-accent) 28%, #181b21);
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .overlay .card {
     animation: completion-arrive var(--ui-motion-slow) var(--ui-motion-ease) both;

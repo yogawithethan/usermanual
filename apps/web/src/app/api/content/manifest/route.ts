@@ -9,6 +9,7 @@ import {
   universeDownloads,
 } from "@islands/content";
 import { getYweMemberSession } from "@/lib/ywe-member-api";
+import { universeHref } from "@/lib/universe-routing";
 
 export const dynamic = "force-dynamic";
 
@@ -105,7 +106,7 @@ export async function GET(request: Request) {
           practices: getUniversePractices(universe.slug).map((practice) => ({
             ...practice,
             mediaHref: null,
-            pageHref: `/universes/${universe.slug}/practices/${practice.id}`,
+            pageHref: universeHref(universe.slug, `/practices/${practice.id}`),
           })),
           releaseStatus,
           sections: contentAvailable ? (tutorial?.sections ?? []).map((section) => ({

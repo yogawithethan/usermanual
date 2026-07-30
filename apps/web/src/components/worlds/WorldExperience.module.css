@@ -258,6 +258,123 @@
 .playerMeta { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .8rem; }
 .playerMeta span { padding: .42rem .62rem; border-radius: 999px; color: #68615d; background: rgba(255,255,255,.72); font-size: .68rem; font-weight: 700; text-transform: capitalize; }
 
+:global(html[data-um-theme="dark"]) .page {
+  --world-ink: #f3f4f6;
+  --world-surface: #15171b;
+  color-scheme: dark;
+  background:
+    radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--world-accent) 26%, transparent), transparent 29rem),
+    linear-gradient(180deg, #101216, #15171b 38rem);
+}
+
+:global(html[data-um-theme="dark"]) .header,
+:global(html[data-um-theme="dark"]) .modeBar,
+:global(html[data-um-theme="dark"]) .contentsRail,
+:global(html[data-um-theme="dark"]) .articleIntro,
+:global(html[data-um-theme="dark"]) .completePanel,
+:global(html[data-um-theme="dark"]) .filterShell,
+:global(html[data-um-theme="dark"]) .practiceCard,
+:global(html[data-um-theme="dark"]) .faq,
+:global(html[data-um-theme="dark"]) .questionCard,
+:global(html[data-um-theme="dark"]) .downloadCard,
+:global(html[data-um-theme="dark"]) .gate,
+:global(html[data-um-theme="dark"]) .completionCard,
+:global(html[data-um-theme="dark"]) .playerCard {
+  border-color: rgba(255,255,255,.1);
+  background: rgba(255,255,255,.055);
+  box-shadow: 0 12px 34px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.07);
+}
+
+:global(html[data-um-theme="dark"]) .hero {
+  border-color: rgba(255,255,255,.1);
+  background:
+    radial-gradient(circle at 22% 24%, rgba(255,255,255,.07), transparent 18rem),
+    radial-gradient(circle at 78% 35%, color-mix(in srgb, var(--world-accent) 32%, transparent), transparent 22rem),
+    linear-gradient(145deg, #1b1e24, #111318);
+  box-shadow: 0 18px 48px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+:global(html[data-um-theme="dark"]) .back,
+:global(html[data-um-theme="dark"]) .accountPlaceholder,
+:global(html[data-um-theme="dark"]) .progress,
+:global(html[data-um-theme="dark"]) .gateChip,
+:global(html[data-um-theme="dark"]) .filterChip,
+:global(html[data-um-theme="dark"]) .select,
+:global(html[data-um-theme="dark"]) .cardAction,
+:global(html[data-um-theme="dark"]) .secondaryButton,
+:global(html[data-um-theme="dark"]) .comingSoonIcon,
+:global(html[data-um-theme="dark"]) .playerMeta span {
+  border-color: rgba(255,255,255,.1);
+  color: #e5e7eb;
+  background: rgba(255,255,255,.07);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+:global(html[data-um-theme="dark"]) .heroIcon {
+  border-color: rgba(255,255,255,.12);
+  background: rgba(255,255,255,.08);
+  box-shadow: 0 8px 24px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.07);
+}
+
+:global(html[data-um-theme="dark"]) .activePill {
+  border-color: rgba(255,255,255,.1);
+  background: rgba(255,255,255,.1);
+  box-shadow: 0 3px 10px rgba(0,0,0,.24);
+}
+
+:global(html[data-um-theme="dark"]) .tab,
+:global(html[data-um-theme="dark"]) .contentsRail p,
+:global(html[data-um-theme="dark"]) .contentsRail a,
+:global(html[data-um-theme="dark"]) .eyebrow,
+:global(html[data-um-theme="dark"]) .articleLead,
+:global(html[data-um-theme="dark"]) .completePanel small,
+:global(html[data-um-theme="dark"]) .filterLabel,
+:global(html[data-um-theme="dark"]) .resultCount,
+:global(html[data-um-theme="dark"]) .practiceMeta,
+:global(html[data-um-theme="dark"]) .practiceCopy,
+:global(html[data-um-theme="dark"]) .sectionHeader p,
+:global(html[data-um-theme="dark"]) .faq p,
+:global(html[data-um-theme="dark"]) .questionCard span,
+:global(html[data-um-theme="dark"]) .downloadCard p,
+:global(html[data-um-theme="dark"]) .gate p,
+:global(html[data-um-theme="dark"]) .completionCard p,
+:global(html[data-um-theme="dark"]) .playerBack,
+:global(html[data-um-theme="dark"]) .comingSoon p,
+:global(html[data-um-theme="dark"]) .playerInfo p {
+  color: #aeb4bf;
+}
+
+:global(html[data-um-theme="dark"]) .tab[aria-selected="true"],
+:global(html[data-um-theme="dark"]) .contentsRail a:hover,
+:global(html[data-um-theme="dark"]) .prose,
+:global(html[data-um-theme="dark"]) .faq summary,
+:global(html[data-um-theme="dark"]) .downloadCard h3,
+:global(html[data-um-theme="dark"]) .gate h2 {
+  color: var(--world-ink);
+}
+
+:global(html[data-um-theme="dark"]) .contentsRail a:hover {
+  background: rgba(255,255,255,.07);
+}
+
+:global(html[data-um-theme="dark"]) .chapter {
+  border-bottom-color: rgba(255,255,255,.09);
+}
+
+:global(html[data-um-theme="dark"]) .thumb,
+:global(html[data-um-theme="dark"]) .playerStage {
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255,255,255,.08), transparent 45%),
+    color-mix(in srgb, var(--world-accent) 24%, #17191e);
+}
+
+:global(html[data-um-theme="dark"]) .progressDot,
+:global(html[data-um-theme="dark"]) .faq summary::after,
+:global(html[data-um-theme="dark"]) .downloadIcon,
+:global(html[data-um-theme="dark"]) .gateIcon {
+  background: color-mix(in srgb, var(--world-accent) 24%, #1a1c21);
+}
+
 @keyframes world-drift { from { transform: translate3d(-3%, -2%, 0) scale(.96); } to { transform: translate3d(7%, 5%, 0) scale(1.08); } }
 
 @media (max-width: 48rem) {
@@ -270,6 +387,7 @@
   .contentsRail { position: static; display: flex; gap: .35rem; max-height: none; margin-bottom: 1rem; padding: .5rem; overflow-x: auto; border-radius: 999px; }
   .contentsRail p { display: none; }
   .contentsRail a { flex: 0 0 auto; padding: .55rem .7rem; border-radius: 999px; background: rgba(255,255,255,.62); }
+  :global(html[data-um-theme="dark"]) .contentsRail a { background: rgba(255,255,255,.065); }
   .filterOptions { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .practiceCard { grid-template-columns: 5rem minmax(0,1fr) auto; gap: .75rem; min-height: 6.6rem; }
   .thumb { height: 5rem; }

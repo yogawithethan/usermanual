@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Suspense, ViewTransition } from "react";
 
 import { AppProviders } from "@/components/settings/AppProviders";
@@ -14,14 +15,38 @@ export const metadata: Metadata = {
   description: "A yoga education platform.",
 };
 
+const themeBootstrap = `
+  (() => {
+    try {
+      const raw = localStorage.getItem("um:settings:v1");
+      const theme = raw ? JSON.parse(raw).theme : "light";
+      const mode = theme === "dark" || theme === "oled" ? "dark" : "light";
+      document.documentElement.dataset.umTheme = mode;
+      document.documentElement.dataset.theme = mode;
+      document.documentElement.dataset.themeMode = mode;
+    } catch {
+      document.documentElement.dataset.umTheme = "light";
+      document.documentElement.dataset.theme = "light";
+      document.documentElement.dataset.themeMode = "light";
+    }
+  })();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${appChromeFontClassName} h-full antialiased`}>
+    <html
+      lang="en"
+      className={`${appChromeFontClassName} h-full antialiased`}
+      suppressHydrationWarning
+    >
       <body className="min-h-full flex flex-col overflow-x-hidden">
+        <Script id="user-manual-theme" strategy="beforeInteractive">
+          {themeBootstrap}
+        </Script>
         <AppProviders>
           <ViewTransition
             enter={{

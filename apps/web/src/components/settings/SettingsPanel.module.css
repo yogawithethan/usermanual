@@ -54,7 +54,7 @@
   top: 4px;
   bottom: 4px;
   left: 4px;
-  width: calc((100% - 16px) / 3);
+  width: calc((100% - 20px) / 4);
   background:
     linear-gradient(120deg, rgba(255,255,255,.96), rgba(255,255,255,.7)),
     url("/textures/lifetime-offer-pearl.png") center / cover no-repeat;

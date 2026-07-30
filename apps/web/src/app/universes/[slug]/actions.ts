@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { getPracticeUniverse } from "@islands/content";
 import { getUserManualEntitlement } from "@/lib/entitlements";
 import { callYweMemberApi } from "@/lib/ywe-member-api";
+import { universeHref } from "@/lib/universe-routing";
 
 export async function registerReleaseInterest(formData: FormData) {
   const slug = String(formData.get("slug") ?? "");
@@ -17,7 +18,7 @@ export async function registerReleaseInterest(formData: FormData) {
 
   const entitlement = await getUserManualEntitlement();
   if (!entitlement.userId) {
-    redirect(`/login?next=${encodeURIComponent(`/universes/${slug}`)}`);
+    redirect(`/login?next=${encodeURIComponent(universeHref(slug))}`);
   }
   if (!entitlement.entitled) {
     redirect(`/paid?feature=${encodeURIComponent(slug)}`);
@@ -29,10 +30,10 @@ export async function registerReleaseInterest(formData: FormData) {
   });
   if (!response.ok) {
     const result = (await response.json().catch(() => ({}))) as { error?: string };
-    redirect(`/universes/${slug}?error=${encodeURIComponent(result.error ?? "Could not save notification preference")}`);
+    redirect(`${universeHref(slug)}?error=${encodeURIComponent(result.error ?? "Could not save notification preference")}`);
   }
 
-  redirect(`/universes/${slug}?notification=registered`);
+  redirect(`${universeHref(slug)}?notification=registered`);
 }
 
 export async function completeUniverse(formData: FormData) {
@@ -46,7 +47,7 @@ export async function completeUniverse(formData: FormData) {
 
   const entitlement = await getUserManualEntitlement();
   if (!entitlement.userId) {
-    redirect(`/login?next=${encodeURIComponent(`/universes/${slug}`)}`);
+    redirect(`/login?next=${encodeURIComponent(universeHref(slug))}`);
   }
   if (!entitlement.entitled) {
     redirect(`/paid?feature=${encodeURIComponent(slug)}`);
@@ -58,10 +59,10 @@ export async function completeUniverse(formData: FormData) {
   });
   if (!response.ok) {
     const result = await response.json().catch(() => ({})) as { error?: string };
-    redirect(`/universes/${slug}?error=${encodeURIComponent(result.error ?? "Could not update tutorial progress")}`);
+    redirect(`${universeHref(slug)}?error=${encodeURIComponent(result.error ?? "Could not update tutorial progress")}`);
   }
 
   revalidatePath("/");
-  revalidatePath(`/universes/${slug}`);
-  redirect(`/universes/${slug}`);
+  revalidatePath(universeHref(slug));
+  redirect(universeHref(slug));
 }

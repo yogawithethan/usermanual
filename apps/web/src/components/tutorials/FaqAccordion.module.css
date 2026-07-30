@@ -1,0 +1,108 @@
+.root {
+  margin-top: 1.5rem;
+  overflow: hidden;
+  border: 1px solid #e4ded8;
+  background: white;
+  box-shadow: 0 8px 24px rgb(12 19 45 / 5%);
+}
+
+.item + .item { border-top: 1px solid #e4ded8; }
+
+.question {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 1rem 1.25rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 180ms ease;
+}
+
+.question:hover,
+.question:focus-visible {
+  background: #f8fafc;
+  outline: none;
+}
+
+.label {
+  color: #111;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.38;
+}
+
+.toggle {
+  position: relative;
+  display: flex;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #f5f8fc;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 90%), 0 3px 9px rgb(12 19 45 / 8%);
+  transition: background-color 180ms ease;
+}
+
+.toggleLine {
+  position: absolute;
+  width: .875rem;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  transition: transform 200ms ease-out;
+}
+
+.lineHorizontal { transform: rotate(0); }
+.lineVertical { transform: rotate(90deg); }
+.open .lineHorizontal { transform: rotate(45deg); }
+.open .lineVertical { transform: rotate(-45deg); }
+
+.answerGrid {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 300ms ease-out;
+}
+
+.answerGridOpen { grid-template-rows: 1fr; }
+.answerInner { overflow: hidden; }
+.answer {
+  margin: 0;
+  padding: 0 1.25rem 1.25rem;
+  color: #536071;
+  font-size: 1.125rem;
+  line-height: 1.55;
+}
+
+:global(html[data-um-theme="dark"]) .root {
+  border-color: rgb(255 255 255 / 11%);
+  background: rgb(255 255 255 / 6%);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 22%);
+}
+:global(html[data-um-theme="dark"]) .item + .item { border-top-color: rgb(255 255 255 / 10%); }
+:global(html[data-um-theme="dark"]) .question:hover,
+:global(html[data-um-theme="dark"]) .question:focus-visible { background: rgb(255 255 255 / 6%); }
+:global(html[data-um-theme="dark"]) .label { color: #f4f5f7; }
+:global(html[data-um-theme="dark"]) .toggle {
+  background: rgb(255 255 255 / 8%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 8%), 0 3px 9px rgb(0 0 0 / 24%);
+}
+:global(html[data-um-theme="dark"]) .answer { color: #b7bec9; }
+
+@media (min-width: 768px) {
+  .question { padding-right: 1.5rem; padding-left: 1.5rem; }
+  .label { font-size: 1.3125rem; }
+  .answer { padding-right: 1.5rem; padding-left: 1.5rem; font-size: 1.25rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .question,
+  .toggleLine,
+  .answerGrid { transition: none; }
+}

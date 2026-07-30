@@ -249,7 +249,7 @@ function AccountSettings({
 
 function DeveloperSettings() {
   const router = useRouter();
-  const { purchased, devSimulateSignedIn, update } = useSettings();
+  const { purchased, devSimulateSignedIn, tokens, update } = useSettings();
   const [devProgressMode, setDevProgressMode] = useState<DevProgressMode>("real");
 
   useEffect(() => {
@@ -273,8 +273,37 @@ function DeveloperSettings() {
     router.refresh();
   };
 
+  const unlockEverything = () => {
+    const maxAge = 60 * 60 * 24 * 7;
+    update({ purchased: true, devSimulateSignedIn: true });
+    setDevProgressMode("all");
+    document.cookie = `${DEV_PREMIUM_COOKIE}=1; path=/; max-age=${maxAge}; samesite=lax`;
+    document.cookie = `${DEV_AUTH_COOKIE}=1; path=/; max-age=${maxAge}; samesite=lax`;
+    document.cookie = `${DEV_PROGRESS_COOKIE}=all; path=/; max-age=${maxAge}; samesite=lax`;
+    router.refresh();
+  };
+
   return (
     <div className="grid gap-6 px-4 py-4">
+      <button
+        type="button"
+        onClick={unlockEverything}
+        className="shape-card flex w-full items-center justify-between px-4 py-3 text-left active:opacity-70"
+        style={{
+          backgroundColor: tokens.bgSoft,
+          border: `1px solid ${tokens.pillBorder}`,
+          color: tokens.ink,
+        }}
+      >
+        <span>
+          <span className="block text-[15px] font-bold">Unlock everything</span>
+          <span className="mt-0.5 block text-[12px] opacity-60">
+            Opens every detail page for local editing.
+          </span>
+        </span>
+        <Icon name="lock" className="h-4 w-4" />
+      </button>
+
       <section>
         <SectionLabel>Access preview</SectionLabel>
         <ToggleRow

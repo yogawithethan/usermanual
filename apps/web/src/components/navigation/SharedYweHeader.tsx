@@ -3,6 +3,11 @@
 import { createElement, useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 
+import {
+  DEV_PROGRESS_COOKIE,
+  devCompletedLevelCount,
+  normalizeDevProgressMode,
+} from "@/lib/dev-progress";
 import { useAuth } from "@/lib/settings/AuthContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
 import { observeDirectionalTopChrome } from "@/components/ui/useDirectionalTopChrome";
@@ -15,7 +20,13 @@ const USER_MANUAL_AUTH_STYLES = `
     background: transparent !important;
     box-shadow: none !important;
   }
-  :host([detail-page]) .mobile-top { display: none !important; }
+  @media (min-width: 768px) {
+    :host([detail-page]) .bar {
+      top: max(20px, env(safe-area-inset-top)) !important;
+      height: 40px !important;
+    }
+    :host([detail-page]) .slot-left { gap: 7px !important; }
+  }
   :host([detail-page]) .mt-title-group { display: none !important; }
   .auth-scrim {
     z-index: 20119 !important;
@@ -95,6 +106,30 @@ const USER_MANUAL_AUTH_STYLES = `
     margin-inline: auto !important;
     text-wrap: balance;
   }
+  :host([data-um-theme="dark"]) .auth-sheet {
+    background:
+      linear-gradient(rgba(31,33,39,.97), rgba(22,24,29,.95)) padding-box,
+      linear-gradient(118deg, rgba(255,171,197,.46), rgba(255,235,168,.42) 27%, rgba(164,235,221,.4) 54%, rgba(175,197,255,.48) 78%, rgba(225,178,255,.44)) border-box !important;
+    box-shadow: 0 28px 80px rgba(0,0,0,.58), inset 0 1px 0 rgba(255,255,255,.11) !important;
+    color: #f3f4f6 !important;
+  }
+  :host([data-um-theme="dark"]) .auth-sheet::before { opacity: .09; }
+  :host([data-um-theme="dark"]) .auth-x,
+  :host([data-um-theme="dark"]) .auth-pills,
+  :host([data-um-theme="dark"]) .auth-email {
+    border-color: rgba(255,255,255,.12) !important;
+    background: rgba(255,255,255,.07) !important;
+    box-shadow: inset 0 1px rgba(255,255,255,.09) !important;
+    color: #f3f4f6 !important;
+  }
+  :host([data-um-theme="dark"]) .auth-glider {
+    background: rgba(255,255,255,.12) !important;
+    box-shadow: 0 6px 16px rgba(0,0,0,.25), inset 0 1px rgba(255,255,255,.1) !important;
+  }
+  :host([data-um-theme="dark"]) .auth-sheet[data-mode="signin"] .auth-pill[data-mode="signin"],
+  :host([data-um-theme="dark"]) .auth-sheet[data-mode="signup"] .auth-pill[data-mode="signup"] {
+    color: #fff !important;
+  }
   @media (max-width: 767px) {
     .auth-sheet {
       left: 50% !important;
@@ -131,10 +166,23 @@ type SharedComponentPlatform = {
   loadingHeader?: Promise<unknown>;
 };
 
+type SharedTutorialJourney = {
+  signedIn: boolean;
+  access: {
+    completedLevels: number[];
+    entitled: boolean;
+    levelProgress: Array<{ level_number: number; status: string }>;
+  };
+  profile: { welcomeCompletedAt: number | null };
+  practices: Array<{ practice_id: string; status: string }>;
+};
+
 declare global {
   interface Window {
     YWEUserManualChapters?: Array<{ href: string; label: string; active?: boolean }>;
     YWESharedComponents?: SharedComponentPlatform;
+    drstiAuth?: () => "logged_out" | "no_sub" | "plus" | "ruby" | "om";
+    drstiTutorialJourney?: SharedTutorialJourney;
   }
 }
 
@@ -149,14 +197,15 @@ function installUserManualAuthSkin(header: SharedHeaderElement) {
 
 export function SharedYweHeader() {
   const [ready, setReady] = useState(false);
-  const [chapterItems, setChapterItems] = useState<Array<{ href: string; label: string; active?: boolean }>>([]);
   const { entitled, ready: authReady, user } = useAuth();
-  const { devSimulateSignedIn, ready: settingsReady, update } = useSettings();
+  const { devSimulateSignedIn, purchased, ready: settingsReady, theme, update } = useSettings();
   const headerRef = useRef<SharedHeaderElement | null>(null);
   const pathname = usePathname();
   const isDetailPage = /^\/(levels|universes)\//.test(pathname);
   const enabled = !pathname.startsWith("/ui-lab");
   const signedIn = Boolean(user || devSimulateSignedIn);
+  const isDark = theme === "dark" || theme === "oled";
+  const hasUserManualAccess = entitled || purchased;
   const accountRequired = authReady && settingsReady && pathname === "/" && !signedIn;
   const setHeaderRef = useCallback((header: SharedHeaderElement | null) => {
     headerRef.current = header;
@@ -210,10 +259,22 @@ export function SharedYweHeader() {
     if (!ready || !enabled) return;
     const header = headerRef.current;
     if (!header) return;
-    installUserManualAuthSkin(header);
-    const frame = requestAnimationFrame(() => installUserManualAuthSkin(header));
-    return () => cancelAnimationFrame(frame);
-  }, [enabled, ready]);
+    let frame = 0;
+    const sync = () => {
+      frame = 0;
+      installUserManualAuthSkin(header);
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(sync);
+    };
+    const observer = new MutationObserver(schedule);
+    observer.observe(header.shadowRoot!, { childList: true, subtree: true });
+    sync();
+    return () => {
+      observer.disconnect();
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, [enabled, pathname, ready]);
 
   useEffect(() => {
     if (!ready || !enabled) return;
@@ -227,18 +288,62 @@ export function SharedYweHeader() {
   }, [enabled, ready]);
 
   useEffect(() => {
-    if (!isDetailPage) {
-      setChapterItems([]);
-      return;
-    }
-    const syncChapters = (event?: Event) => {
-      const detail = (event as CustomEvent<{ items?: Array<{ href: string; label: string; active?: boolean }> }> | undefined)?.detail;
-      setChapterItems(detail?.items ?? window.YWEUserManualChapters ?? []);
+    if (
+      !ready ||
+      !enabled ||
+      process.env.NODE_ENV === "production" ||
+      !devSimulateSignedIn
+    ) return;
+
+    const devProgressMode = normalizeDevProgressMode(
+      document.cookie
+        .split("; ")
+        .find((row) => row.startsWith(`${DEV_PROGRESS_COOKIE}=`))
+        ?.split("=")[1],
+    );
+    const completedLevelCount = devCompletedLevelCount(devProgressMode, 0);
+    const completedLevels = Array.from(
+      { length: completedLevelCount },
+      (_, index) => index + 1,
+    );
+    const authBridge = () => purchased ? "plus" as const : "no_sub" as const;
+    const journeyBridge: SharedTutorialJourney = {
+      signedIn: true,
+      access: {
+        completedLevels,
+        entitled: purchased,
+        levelProgress: completedLevels.map((level) => ({
+          level_number: level,
+          status: "completed",
+        })),
+      },
+      profile: {
+        welcomeCompletedAt: completedLevelCount > 0 ? 1 : null,
+      },
+      practices: [],
     };
-    syncChapters();
-    document.addEventListener("um:chapters-change", syncChapters);
-    return () => document.removeEventListener("um:chapters-change", syncChapters);
-  }, [isDetailPage, pathname]);
+    const previousAuth = window.drstiAuth;
+    const previousJourney = window.drstiTutorialJourney;
+
+    window.drstiAuth = authBridge;
+    window.drstiTutorialJourney = journeyBridge;
+    headerRef.current?.configure?.({});
+    if (headerRef.current) {
+      installUserManualAuthSkin(headerRef.current);
+    }
+
+    return () => {
+      if (window.drstiAuth === authBridge) {
+        if (previousAuth) window.drstiAuth = previousAuth;
+        else delete window.drstiAuth;
+      }
+      if (window.drstiTutorialJourney === journeyBridge) {
+        if (previousJourney) window.drstiTutorialJourney = previousJourney;
+        else delete window.drstiTutorialJourney;
+      }
+      headerRef.current?.configure?.({});
+    };
+  }, [devSimulateSignedIn, enabled, pathname, purchased, ready]);
 
   useEffect(() => {
     if (!ready || !enabled) return;
@@ -246,24 +351,19 @@ export function SharedYweHeader() {
     else headerRef.current?.removeAttribute("auth-required");
     const shared = {
       active: "tutorial",
-      userManualAccess: entitled,
+      userManualAccess: hasUserManualAccess,
       account: false,
       mobileBottom: false,
+      tutorialPath: pathname,
+      theme: isDark ? "dark" : "light",
     };
-    headerRef.current?.configure?.(isDetailPage ? {
+    const header = headerRef.current;
+    header?.configure?.(isDetailPage ? {
       ...shared,
       preset: "immersive-detail",
-      back: { mode: "auto", href: "/" },
-      actions: chapterItems.length ? [{
-        icon: "sidebar",
-        label: "Chapters",
-        tip: "Chapters",
-        panel: "chapters",
-        mobileOnly: true,
-      }] : [],
-      panels: chapterItems.length ? {
-        chapters: { title: "Chapters", layout: "immersive-chapters", items: chapterItems },
-      } : {},
+      back: { mode: "href", href: "/" },
+      actions: [],
+      panels: {},
     } : {
       ...shared,
       preset: "immersive",
@@ -276,16 +376,32 @@ export function SharedYweHeader() {
       }],
       panels: {},
     });
-  }, [accountRequired, chapterItems, enabled, entitled, isDetailPage, ready, signedIn]);
+    if (header) {
+      installUserManualAuthSkin(header);
+    }
+  }, [accountRequired, enabled, hasUserManualAccess, isDark, isDetailPage, pathname, ready, signedIn]);
 
   useEffect(() => {
     const syncTheme = (event: Event) => {
       const mode = (event as CustomEvent<{ mode?: string }>).detail?.mode;
       if (mode === "dark" || mode === "light") update({ theme: mode });
     };
+    const syncThemeControl = () => {
+      queueMicrotask(() => {
+        const mode = document.documentElement.dataset.theme;
+        if (mode === "dark" || mode === "light") update({ theme: mode });
+      });
+    };
+    const themeControl = headerRef.current?.shadowRoot?.querySelector(".theme-switch");
     window.addEventListener("yweThemeChange", syncTheme);
-    return () => window.removeEventListener("yweThemeChange", syncTheme);
-  }, [update]);
+    document.addEventListener("yweThemeChange", syncTheme);
+    themeControl?.addEventListener("click", syncThemeControl);
+    return () => {
+      window.removeEventListener("yweThemeChange", syncTheme);
+      document.removeEventListener("yweThemeChange", syncTheme);
+      themeControl?.removeEventListener("click", syncThemeControl);
+    };
+  }, [ready, update]);
 
   useEffect(() => {
     const openAuth = (event: Event) => {
@@ -305,8 +421,9 @@ export function SharedYweHeader() {
   return createElement("drsti-header", {
     active: "tutorial",
     "auth-required": accountRequired ? "" : undefined,
+    "data-um-theme": isDark ? "dark" : "light",
     "detail-page": isDetailPage ? "" : undefined,
     ref: setHeaderRef,
-    "user-manual-access": String(entitled),
+    "user-manual-access": String(hasUserManualAccess),
   });
 }

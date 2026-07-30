@@ -19,6 +19,7 @@ const settingsStyles = read("apps/web/src/components/settings/SettingsPanel.modu
 const settingsPrimitiveStyles = read("apps/web/src/components/settings/SettingsPrimitives.module.css");
 const ambientMotion = read("apps/web/src/components/motion/AmbientMotionController.tsx");
 const userManualSettings = read("apps/web/src/components/settings/UserManualSettings.tsx");
+const sharedHeader = read("apps/web/src/components/navigation/SharedYweHeader.tsx");
 const worldRoute = read("apps/web/src/app/universes/[slug]/page.tsx");
 const practiceRoute = read("apps/web/src/app/universes/[slug]/practices/[practiceId]/page.tsx");
 const tutorialContent = read("packages/content/src/universe-tutorials.generated.ts");
@@ -105,6 +106,12 @@ assert.match(ambientMotion, /data-ambient-paused/);
 assert.doesNotMatch(settings, /label: "Look"/);
 assert.match(settingsPrimitiveStyles, /lifetime-offer-pearl\.png/);
 assert.match(settingsPrimitiveStyles, /\.segmentedSlider/);
+assert.match(sharedHeader, /window\.drstiAuth = authBridge/);
+assert.match(sharedHeader, /window\.drstiTutorialJourney = journeyBridge/);
+assert.match(sharedHeader, /devCompletedLevelCount\(devProgressMode, 0\)/);
+assert.match(sharedHeader, /tutorialPath: pathname/);
+assert.doesNotMatch(sharedHeader, /syncTutorialMenuPresentation/);
+assert.doesNotMatch(sharedHeader, /tutorial-step-state-incomplete/);
 
 assert.match(worldRoute, /getUniverseTutorial/);
 assert.match(worldRoute, /getUniversePractices/);

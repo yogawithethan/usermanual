@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getUniversePractices, universePractices } from "@islands/content";
 
 import { getUserManualEntitlement } from "@/lib/entitlements";
+import { universeHref } from "@/lib/universe-routing";
 
 export async function GET(request: Request) {
   const entitlement = await getUserManualEntitlement();
@@ -22,7 +23,7 @@ export async function GET(request: Request) {
       id: practice.id,
       intensity: practice.intensity,
       kind: practice.kind,
-      pageHref: `/universes/${practice.universeSlug}/practices/${practice.id}`,
+      pageHref: universeHref(practice.universeSlug, `/practices/${practice.id}`),
       releaseStatus: practice.releaseStatus,
       title: practice.title,
       universeSlug: practice.universeSlug,

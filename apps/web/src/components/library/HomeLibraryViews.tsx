@@ -14,6 +14,7 @@ import { SystemIcon } from "@/components/ui/SystemIcon";
 import type { LibraryMode } from "@/components/library/LibraryModeSwitcher";
 import { FaqWorldAccordion } from "@/components/library/FaqWorldAccordion";
 import { PracticeLibraryLayout } from "@/components/library/PracticeLibraryLayout";
+import { universeHref } from "@/lib/universe-routing";
 
 import styles from "./HomeLibraryViews.module.css";
 
@@ -82,7 +83,7 @@ function PracticeLibrary({
           return (
             <Link
               className={styles.practiceCard}
-              href={`/universes/${universe.slug}/practices/${practice.id}`}
+              href={universeHref(universe.slug, `/practices/${practice.id}`)}
               key={practice.id}
               style={worldStyle(universe.theme.accent, universe.theme.surface, universe.theme.ink)}
             >
@@ -158,7 +159,7 @@ function DownloadLibrary({
           return (
             <Link
               className={styles.downloadCard}
-              href={entitled ? `/universes/${universe.slug}?mode=downloads` : "/paid?feature=downloads"}
+              href={entitled ? `${universeHref(universe.slug)}?mode=downloads` : "/paid?feature=downloads"}
               key={download.id}
               style={worldStyle(universe.theme.accent, universe.theme.surface, universe.theme.ink)}
             >

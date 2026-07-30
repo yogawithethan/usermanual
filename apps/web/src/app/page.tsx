@@ -14,7 +14,8 @@ import { dseTheme } from "@/themes/dse";
 import { WELCOME_COMPLETED_COOKIE } from "@/lib/welcome";
 import { getDevAccessPreview } from "@/lib/dev-access-preview";
 import { getYweMemberSession } from "@/lib/ywe-member-api";
-import { PranaLightningField } from "@/components/motion/PranaLightning";
+import { UniverseAtmosphere } from "@/components/motion/UniverseAtmosphere";
+import { universeHref } from "@/lib/universe-routing";
 import { practiceUniverses, type PracticeUniverse } from "@islands/content";
 import {
   DEV_PROGRESS_COOKIE,
@@ -100,85 +101,6 @@ const UNIVERSE_CARD_LAYOUTS: Record<
   },
 };
 
-const WTFU_DUST = [
-  ["39%", "70%", "2px", "11s", "-2s"],
-  ["43%", "58%", "1px", "14s", "-9s"],
-  ["47%", "68%", "2px", "17s", "-5s"],
-  ["51%", "52%", "1px", "13s", "-11s"],
-  ["55%", "74%", "2px", "16s", "-7s"],
-  ["59%", "61%", "1px", "12s", "-3s"],
-  ["45%", "42%", "2px", "18s", "-13s"],
-  ["53%", "66%", "1px", "15s", "-6s"],
-  ["41%", "48%", "2px", "13s", "-10s"],
-  ["49%", "76%", "1px", "18s", "-15s"],
-  ["57%", "45%", "2px", "14s", "-8s"],
-  ["61%", "72%", "1px", "17s", "-12s"],
-  ["36%", "62%", "1px", "15s", "-4s"],
-  ["64%", "55%", "2px", "16s", "-14s"],
-  ["50%", "36%", "1px", "12s", "-7s"],
-  ["46%", "82%", "2px", "19s", "-16s"],
-] as const;
-
-function seededUnit(index: number, salt: number) {
-  return Math.abs(Math.sin(index * 12.9898 + salt * 78.233) * 43758.5453) % 1;
-}
-
-const GY_PARTICLES = Array.from({ length: 74 }, (_, index) => {
-  const left = 4 + seededUnit(index, 1) * 92;
-  const top = 10 + seededUnit(index, 2) * 78;
-  const size = 0.2 + seededUnit(index, 3) * 0.8;
-  const duration = 34 + seededUnit(index, 4) * 34;
-  const delay = -seededUnit(index, 5) * duration;
-  const attract = index % 4 === 0 ? -1 : 1;
-  const dx = (50 - left) * (0.035 + seededUnit(index, 6) * 0.085) * attract;
-  const dy = (50 - top) * (0.035 + seededUnit(index, 7) * 0.085) * attract;
-  const opacity = seededUnit(index, 15) * 0.7;
-
-  return [
-    `${left.toFixed(1)}%`,
-    `${top.toFixed(1)}%`,
-    `${size.toFixed(2)}px`,
-    `${duration.toFixed(1)}s`,
-    `${delay.toFixed(1)}s`,
-    `${dx.toFixed(1)}px`,
-    `${dy.toFixed(1)}px`,
-    `${(dx * 0.64).toFixed(1)}px`,
-    `${(dy * 0.64).toFixed(1)}px`,
-    opacity.toFixed(2),
-  ] as const;
-});
-
-const H2T_EDGE_PARTICLES = Array.from({ length: 118 }, (_, index) => {
-  const side = index % 4;
-  const along = 3 + seededUnit(index, 8) * 94;
-  const inset = seededUnit(index, 9) * 16;
-  const left =
-    side === 0 || side === 1
-      ? along
-      : side === 2
-        ? 4 + inset
-        : 96 - inset;
-  const top =
-    side === 2 || side === 3
-      ? along
-      : side === 0
-        ? 5 + inset
-        : 95 - inset;
-  const size = seededUnit(index, 10) > 0.78 ? 2.5 : seededUnit(index, 11) > 0.42 ? 2 : 1.25;
-  const duration = 0.32 + seededUnit(index, 12) * 0.28;
-  const delay = -seededUnit(index, 13) * 0.8;
-  const opacity = 0.18 + seededUnit(index, 14) * 0.5;
-
-  return [
-    `${left.toFixed(1)}%`,
-    `${top.toFixed(1)}%`,
-    `${size}px`,
-    `${duration.toFixed(2)}s`,
-    `${delay.toFixed(2)}s`,
-    opacity.toFixed(2),
-  ] as const;
-});
-
 export default async function Home({ searchParams }: HomePageProps) {
   const query = await searchParams;
   const libraryMode = normalizeLibraryMode(query.mode);
@@ -202,7 +124,8 @@ export default async function Home({ searchParams }: HomePageProps) {
   const hasCompletedWelcome = Boolean(
     memberSession.profile?.welcomeCompletedAt ||
       cookieStore.get(WELCOME_COMPLETED_COOKIE)?.value === "1" ||
-      devProgressMode === "all",
+      devProgressMode === "all" ||
+      devAccessPreview.fullAccess,
   );
   const journeyReady = Boolean(userId && hasCompletedWelcome);
 
@@ -370,20 +293,19 @@ function WelcomeButton() {
       href="/welcome"
       transitionTypes={["nav-forward"]}
       aria-label="Start Here — welcome introduction"
-      className="rainbow-border shape-frame group block p-[2px]"
+      className={`rainbow-border shape-frame group block p-[2px] ${styles.startLink}`}
     >
       <span className="shape-frame relative flex min-h-[104px] items-center justify-center overflow-hidden bg-black px-7 md:min-h-[116px]">
         <span
-          className="relative z-[1] text-[28px] font-extrabold lowercase leading-none tracking-normal text-white md:text-[32px] xl:text-[36px]"
+          className={`relative z-[1] text-[28px] font-extrabold leading-none tracking-normal text-white md:text-[32px] xl:text-[36px] ${styles.startLabel}`}
           style={{
-            fontFamily: "var(--font-dse-poppins), var(--theme-font-body)",
             textShadow:
               "0 1px 2px rgba(0,0,0,0.28), 0 2px 8px rgba(12,19,45,0.32)",
           }}
         >
           Start Here
         </span>
-        <span className="absolute right-7 top-1/2 z-[2] -translate-y-1/2 translate-x-2 scale-75 text-white opacity-0 transition-[opacity,transform] duration-300 ease-[cubic-bezier(.2,.8,.2,1)] group-hover:translate-x-0 group-hover:scale-100 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:scale-100 group-focus-visible:opacity-100">
+        <span className={`absolute right-7 top-1/2 z-[2] text-white ${styles.startArrow}`}>
           <SystemIcon name="arrow-right" className="h-5 w-5" />
         </span>
       </span>
@@ -460,7 +382,7 @@ function SideTutorialCard({
             ? requiresPurchase
               ? `/paid?feature=${tutorial.slug}`
               : `/locked?type=universe&required=${tutorial.unlockAfterLevel}&target=${tutorial.slug}`
-            : `/universes/${tutorial.slug}`
+            : universeHref(tutorial.slug)
         }
         transitionTypes={["nav-forward"]}
         aria-label={label}
@@ -482,7 +404,7 @@ function SideTutorialCard({
         }}
       >
         <span className="sr-only">{tutorial.title}</span>
-        <UniverseCardAnimation paused={isLocked} slug={tutorial.slug} />
+        <UniverseAtmosphere paused={isLocked} slug={tutorial.slug} />
         <span
           aria-hidden
           className={[
@@ -565,125 +487,6 @@ function SideTutorialCard({
       </StatusTooltip>
     </div>
   );
-}
-
-function UniverseCardAnimation({
-  paused = false,
-  slug,
-}: {
-  paused?: boolean;
-  slug: PracticeUniverse["slug"];
-}) {
-  if (paused) {
-    const staticClass = {
-      "wake-the-fck-up": "universe-fx--wtfu",
-      "prana-fusion": "universe-fx--pf",
-      "yoga-reset": "universe-fx--yr",
-      "gravity-yoga": "universe-fx--gy",
-      "here-to-there": "universe-fx--h2t",
-    }[slug];
-
-    return staticClass ? (
-      <span
-        aria-hidden
-        className={`universe-fx universe-fx--static ${staticClass}`}
-        data-ambient-paused=""
-        style={{ animation: "none" }}
-      />
-    ) : null;
-  }
-
-  if (slug === "wake-the-fck-up") {
-    return (
-      <span aria-hidden className="universe-fx universe-fx--wtfu">
-        <span className="universe-fx__light-source" />
-        <span className="universe-fx__ray universe-fx__ray--one" />
-        <span className="universe-fx__ray universe-fx__ray--two" />
-        <span className="universe-fx__ray universe-fx__ray--three" />
-        {WTFU_DUST.map(([left, top, size, duration, delay], index) => (
-          <span
-            key={index}
-            className="universe-fx__dust"
-            style={
-              {
-                "--fx-left": left,
-                "--fx-top": top,
-                "--fx-size": size,
-                "--fx-duration": duration,
-                "--fx-delay": delay,
-              } as CSSProperties
-            }
-          />
-        ))}
-      </span>
-    );
-  }
-
-  if (slug === "prana-fusion") {
-    return (
-      <PranaLightningField
-        className="universe-fx universe-fx--pf"
-        firstClassName="universe-fx__lottie universe-fx__lottie--one"
-        secondClassName="universe-fx__lottie universe-fx__lottie--two"
-      />
-    );
-  }
-
-  if (slug === "yoga-reset") {
-    return <span aria-hidden className="universe-fx universe-fx--yr" />;
-  }
-
-  if (slug === "gravity-yoga") {
-    return (
-      <span aria-hidden className="universe-fx universe-fx--gy">
-        {GY_PARTICLES.map(([left, top, size, duration, delay, dx, dy, midDx, midDy, opacity], index) => (
-          <span
-            key={index}
-            className="universe-fx__particle universe-fx__particle--gy"
-            style={
-              {
-                "--fx-left": left,
-                "--fx-top": top,
-                "--fx-size": size,
-                "--fx-duration": duration,
-                "--fx-delay": delay,
-                "--fx-dx": dx,
-                "--fx-dy": dy,
-                "--fx-mid-dx": midDx,
-                "--fx-mid-dy": midDy,
-                "--fx-opacity": opacity,
-              } as CSSProperties
-            }
-          />
-        ))}
-      </span>
-    );
-  }
-
-  if (slug === "here-to-there") {
-    return (
-      <span aria-hidden className="universe-fx universe-fx--h2t">
-        {H2T_EDGE_PARTICLES.map(([left, top, size, duration, delay, opacity], index) => (
-          <span
-            key={index}
-            className="universe-fx__particle universe-fx__particle--edge"
-            style={
-              {
-                "--fx-left": left,
-                "--fx-top": top,
-                "--fx-size": size,
-                "--fx-duration": duration,
-                "--fx-delay": delay,
-                "--fx-opacity": opacity,
-              } as CSSProperties
-            }
-          />
-        ))}
-      </span>
-    );
-  }
-
-  return null;
 }
 
 type TileIcon = "practice" | "faqs" | "downloads";

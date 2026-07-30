@@ -1,5 +1,10 @@
 .welcomeItem { margin: 0; }
 
+.startLabel {
+  font-family: var(--font-app-ui), Poppins, Inter, system-ui, sans-serif;
+  text-transform: none;
+}
+
 .universeItem {
   margin: 0;
   content-visibility: auto;
@@ -29,34 +34,14 @@
 :global(html[data-um-theme="dark"]) .headerRule { background: rgba(255,255,255,.13); }
 
 .startArrow {
-  opacity: 0;
-  transform: translate3d(-13px, -50%, 0) scale(.42) rotate(-10deg);
-  transform-origin: left center;
+  opacity: 1;
+  transform: translate3d(0, -50%, 0);
+  transition: transform 220ms cubic-bezier(.22, 1, .36, 1);
 }
 
 .startLink:hover .startArrow,
 .startLink:focus-visible .startArrow {
-  animation: arrowEmerge 560ms both cubic-bezier(.18, .9, .24, 1.18);
-}
-
-@keyframes arrowEmerge {
-  0% {
-    opacity: 0;
-    transform: translate3d(-13px, -50%, 0) scale(.42) rotate(-10deg);
-  }
-  38% {
-    opacity: 1;
-  }
-  68% {
-    transform: translate3d(3px, -50%, 0) scale(1.08) rotate(2deg);
-  }
-  84% {
-    transform: translate3d(-1px, -50%, 0) scale(.98) rotate(-1deg);
-  }
-  100% {
-    opacity: 1;
-    transform: translate3d(0, -50%, 0) scale(1) rotate(0);
-  }
+  transform: translate3d(4px, -50%, 0);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -66,8 +51,6 @@
   .modeStage { animation: none; }
   .startLink:hover .startArrow,
   .startLink:focus-visible .startArrow {
-    animation: none;
-    opacity: 1;
     transform: translate3d(0, -50%, 0);
   }
 }

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import {
   getPracticeUniverse,
   getUniversePractices,
@@ -19,7 +19,8 @@ import {
 } from "@/components/detail/DetailExperience";
 import { ThemeProvider } from "@/themes/ThemeProvider";
 import { dseTheme } from "@/themes/dse";
-import { completeUniverse, registerReleaseInterest } from "./actions";
+import { registerReleaseInterest } from "./actions";
+import { canonicalUniverseRouteSlug, resolveUniverseContentSlug, universeHref } from "@/lib/universe-routing";
 
 interface UniversePageProps {
   params: Promise<{
@@ -33,12 +34,14 @@ interface UniversePageProps {
 }
 
 export function generateStaticParams() {
-  return practiceUniverses.map((universe) => ({ slug: universe.slug }));
+  return practiceUniverses.map((universe) => ({ slug: canonicalUniverseRouteSlug(universe.slug) }));
 }
 
 export default async function UniversePage({ params, searchParams }: UniversePageProps) {
-  const { slug } = await params;
+  const { slug: routeSlug } = await params;
   const pageParams = await searchParams;
+  if (canonicalUniverseRouteSlug(routeSlug) === "wtfu" && routeSlug !== "wtfu") permanentRedirect("/universes/wtfu");
+  const slug = resolveUniverseContentSlug(routeSlug);
   const universe = getPracticeUniverse(slug);
 
   if (!universe) {
@@ -63,7 +66,7 @@ export default async function UniversePage({ params, searchParams }: UniversePag
   if (!signedIn) {
     return (
       <UniverseGate
-        action={<><DetailGatePrimary href={`/login?next=${encodeURIComponent(`/universes/${universe.slug}`)}`}>Log in or create an account</DetailGatePrimary><DetailGateSecondary>Back to The User Manual</DetailGateSecondary></>}
+        action={<><DetailGatePrimary href={`/login?next=${encodeURIComponent(universeHref(universe.slug))}`}>Log in or create an account</DetailGatePrimary><DetailGateSecondary>Back to The User Manual</DetailGateSecondary></>}
         body="This paid tutorial belongs to your shared Yoga With Ethan account. Log in to check your access."
         icon="account"
         state="Account required"
@@ -120,30 +123,17 @@ export default async function UniversePage({ params, searchParams }: UniversePag
     );
   }
 
-  let universeStatus: "not_started" | "in_progress" | "completed" | undefined;
-  if (session.signedIn) {
-    const response = await callYweMemberApi("/api/progress/practices");
-    if (response.ok) {
-      const result = await response.json() as {
-        practices?: Array<{ practice_id: string; status: "not_started" | "in_progress" | "completed" }>;
-      };
-      universeStatus = result.practices?.find(
-        (item) => item.practice_id === universe.slug,
-      )?.status;
-    }
-  }
   const universePractices = getUniversePractices(slug);
   return (
     <ThemeProvider theme={dseTheme} className="flex-1">
       <UniverseDetail
-        completeAction={completeUniverse}
-        completed={devAccessPreview.fullAccess || universeStatus === "completed"}
         practices={universePractices.map((practice) => ({
           description: practice.description,
           duration: practice.durationMinutes,
-          href: `/universes/${universe.slug}/practices/${practice.id}`,
+          href: universeHref(universe.slug, `/practices/${practice.id}`),
           id: practice.id,
           kind: practice.kind,
+          thumbnail: universe.logo,
           title: practice.title,
         }))}
         sections={tutorial.sections}

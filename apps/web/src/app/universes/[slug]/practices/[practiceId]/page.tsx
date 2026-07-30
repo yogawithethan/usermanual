@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import {
   getPracticeUniverse,
   getUniversePractice,
@@ -10,6 +10,7 @@ import { getYweMemberSession } from "@/lib/ywe-member-api";
 import { getDevAccessPreview } from "@/lib/dev-access-preview";
 import { ThemeProvider } from "@/themes/ThemeProvider";
 import { dseTheme } from "@/themes/dse";
+import { canonicalUniverseRouteSlug, resolveUniverseContentSlug } from "@/lib/universe-routing";
 
 interface PracticePageProps {
   params: Promise<{ practiceId: string; slug: string }>;
@@ -19,12 +20,14 @@ interface PracticePageProps {
 export function generateStaticParams() {
   return universePractices.map((practice) => ({
     practiceId: practice.id,
-    slug: practice.universeSlug,
+    slug: canonicalUniverseRouteSlug(practice.universeSlug),
   }));
 }
 
 export default async function PracticePage({ params, searchParams }: PracticePageProps) {
-  const [{ practiceId, slug }, query] = await Promise.all([params, searchParams]);
+  const [{ practiceId, slug: routeSlug }, query] = await Promise.all([params, searchParams]);
+  if (canonicalUniverseRouteSlug(routeSlug) === "wtfu" && routeSlug !== "wtfu") permanentRedirect(`/universes/wtfu/practices/${practiceId}`);
+  const slug = resolveUniverseContentSlug(routeSlug);
   const universe = getPracticeUniverse(slug);
   const practice = getUniversePractice(slug, practiceId);
   if (!universe || !practice) notFound();
