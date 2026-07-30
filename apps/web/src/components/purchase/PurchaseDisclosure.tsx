@@ -21,6 +21,7 @@ import styles from "./PurchaseDisclosure.module.css";
 
 interface PurchaseDisclosureProps {
   className?: string;
+  compact?: boolean;
   defaultOpen?: boolean;
   onPrimaryAction?: () => void;
   primaryHref?: string;
@@ -29,6 +30,7 @@ interface PurchaseDisclosureProps {
 
 export function PurchaseDisclosure({
   className,
+  compact = false,
   defaultOpen = false,
   onPrimaryAction,
   primaryHref,
@@ -40,7 +42,7 @@ export function PurchaseDisclosure({
 
   return (
     <section
-      className={`${styles.root} ${expanded ? styles.expanded : ""} ${className ?? ""}`}
+      className={`${styles.root} ${compact ? styles.compact : ""} ${expanded ? styles.expanded : ""} ${className ?? ""}`}
       data-purchase-disclosure
       data-state={expanded ? "expanded" : "collapsed"}
       aria-label={`${USER_MANUAL_PRICE_LABEL} lifetime companion`}

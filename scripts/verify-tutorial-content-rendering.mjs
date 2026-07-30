@@ -14,6 +14,7 @@ const faqWorldAccordion = read("apps/web/src/components/library/FaqWorldAccordio
 const worldExperience = read("apps/web/src/components/worlds/WorldExperience.tsx");
 const homePage = read("apps/web/src/app/page.tsx");
 const detailExperience = read("apps/web/src/components/detail/DetailExperience.tsx");
+const universeAtmosphere = read("apps/web/src/components/motion/UniverseAtmosphere.tsx");
 const pranaLightning = read("apps/web/src/components/motion/PranaLightning.tsx");
 const levelRoute = read("apps/web/src/app/levels/[level]/page.tsx");
 const universeDetail = read("apps/web/src/components/detail/UniverseDetail.tsx");
@@ -49,8 +50,9 @@ for (const surface of [interactiveChecklist, faqAccordion, faqWorldAccordion, wo
 }
 assert.match(levelRoute, /<MarkdownContent/);
 assert.match(universeDetail, /<MarkdownContent/);
-assert.match(homePage, /<PranaLightningField/);
-assert.match(detailExperience, /<PranaLightningField/);
+assert.match(homePage, /<UniverseAtmosphere/);
+assert.match(detailExperience, /<UniverseAtmosphere/);
+assert.match(universeAtmosphere, /<PranaLightningField/);
 assert.match(pranaLightning, /data-prana-lightning="lottie"/);
 assert.doesNotMatch(detailExperience, /pf-lightning-icon\.svg/);
 

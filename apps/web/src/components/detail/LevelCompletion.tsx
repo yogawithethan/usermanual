@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { CompletionBadge } from "@/components/ui/CompletionBadge";
 import styles from "./LevelCompletion.module.css";
@@ -18,8 +18,14 @@ const CONFETTI = Array.from({ length: 72 }, (_, index) => ({
 export function LevelCompletion({ initiallyComplete, level }: { initiallyComplete: boolean; level: number }) {
   const [complete, setComplete] = useState(initiallyComplete);
   const [saving, setSaving] = useState(false);
+  const [animating, setAnimating] = useState(false);
   const [celebrating, setCelebrating] = useState(false);
   const [error, setError] = useState("");
+  const celebrationTimer = useRef(0);
+
+  useEffect(() => () => {
+    if (celebrationTimer.current) window.clearTimeout(celebrationTimer.current);
+  }, []);
 
   async function markComplete() {
     if (complete || saving) return;
@@ -39,7 +45,12 @@ export function LevelCompletion({ initiallyComplete, level }: { initiallyComplet
       document.dispatchEvent(new CustomEvent("ywe:tutorial-progress-changed", {
         detail: { kind: "level", levelNumber: level, status: "completed" },
       }));
-      setCelebrating(true);
+      setAnimating(true);
+      celebrationTimer.current = window.setTimeout(() => {
+        setAnimating(false);
+        setCelebrating(true);
+        celebrationTimer.current = 0;
+      }, 680);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Progress could not be saved.");
     } finally {
@@ -52,14 +63,25 @@ export function LevelCompletion({ initiallyComplete, level }: { initiallyComplet
 
   return (
     <>
-      <section className={styles.panel} id="complete">
+      <button
+        aria-label={complete ? "Level complete" : `Mark Level ${level} complete`}
+        aria-pressed={complete}
+        className={styles.panel}
+        disabled={saving || complete}
+        id="complete"
+        onClick={markComplete}
+        type="button"
+      >
         <span>
-          <strong>{complete ? `Level ${level} complete` : `Complete Level ${level}`}</strong>
-          <small>Nothing else is required. Mark it complete whenever it feels right.</small>
+          <strong>{complete ? "Level complete" : "Complete level"}</strong>
           {error ? <em role="alert">{error}</em> : null}
         </span>
-        <CompletionBadge complete={complete} disabled={saving || complete} onClick={markComplete} />
-      </section>
+        <CompletionBadge
+          animate={animating}
+          as="span"
+          complete={complete}
+        />
+      </button>
 
       {celebrating ? (
         <>

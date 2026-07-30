@@ -21,8 +21,9 @@ export function PurchaseUnlockCard() {
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-4 z-[20005] flex justify-center px-4 sm:bottom-5">
-      <div className="pointer-events-auto w-full max-w-[70rem]">
+      <div className="pointer-events-auto w-full max-w-[460px]">
         <PurchaseDisclosure
+          compact
           primaryHref={signedIn ? primaryHref : undefined}
           onPrimaryAction={signedIn
             ? undefined

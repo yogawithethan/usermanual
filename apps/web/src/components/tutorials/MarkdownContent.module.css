@@ -92,6 +92,25 @@
 .checkItemDone .checkText { opacity: .62; background-size: 100% 1px; }
 .checkProgress { margin: 14px 2px 0; font-size: .68em; font-weight: 800; letter-spacing: .08em; opacity: .6; text-transform: uppercase; }
 
+:global(html[data-um-theme="dark"]) .checklist {
+  border-color: rgb(255 255 255 / 10%);
+  background:
+    linear-gradient(118deg, rgb(255 255 255 / 6%), rgb(255 255 255 / 3%)),
+    url("/textures/lifetime-offer-pearl.png") center / cover no-repeat,
+    #181b21;
+  box-shadow: 0 16px 38px rgb(0 0 0 / 24%), inset 0 1px 0 rgb(255 255 255 / 7%);
+}
+
+:global(html[data-um-theme="dark"]) .checkItem {
+  border-color: rgb(255 255 255 / 9%);
+  background: rgb(255 255 255 / 5%);
+}
+
+:global(html[data-um-theme="dark"]) .checkItem:hover {
+  border-color: color-mix(in srgb, var(--detail-accent, currentColor) 42%, transparent);
+  background: rgb(255 255 255 / 8%);
+}
+
 @media (max-width: 720px) {
   .paragraph { margin-bottom: 1.05em; line-height: 1.54; }
   .inlineHeading { margin-top: 1.45em; }

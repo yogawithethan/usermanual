@@ -30,6 +30,7 @@ import { PurchaseDisclosure } from "@/components/purchase/PurchaseDisclosure";
 import { MarkdownContent } from "@/components/tutorials/MarkdownContent";
 import { renderMarkdownInline } from "@/components/tutorials/MarkdownInline";
 import { CompletionBadge } from "@/components/ui/CompletionBadge";
+import { universeHref } from "@/lib/universe-routing";
 
 import styles from "./WorldExperience.module.css";
 
@@ -238,7 +239,7 @@ function WorldHeader({
           completedLevelCount={completedLevelCount}
           displayName={member?.displayName}
           email={member?.email}
-          next={`/universes/${universe.slug}`}
+          next={universeHref(universe.slug)}
         />
       </span>
     </header>
@@ -410,7 +411,7 @@ function PracticeMode({
       </section>
       <div className={styles.cards}>
         {visible.map((item) => (
-          <Link className={styles.practiceCard} href={`/universes/${universe.slug}/practices/${item.id}?from=practice`} key={item.id}>
+          <Link className={styles.practiceCard} href={`${universeHref(universe.slug, `/practices/${item.id}`)}?from=practice`} key={item.id}>
             <span className={styles.thumb} aria-hidden>{item.kind === "audio" ? <Headphones size={28} /> : item.kind === "breathwork" ? <Waveform size={28} /> : <Play size={27} />}</span>
             <span>
               <span className={styles.practiceMeta}><span>{item.kind.replace("-", " ")}</span><span>·</span><span>{item.durationMinutes} min</span><span>·</span><span>Coming soon</span></span>
@@ -482,7 +483,7 @@ function DownloadsMode({ downloads, universe }: { downloads: UniverseDownload[];
       </div>
       <section className={styles.questionCard}>
         <span><strong>Included when released</strong><span>Your lifetime ownership covers these files and future User Manual additions included in this offer.</span></span>
-        <Link className={styles.secondaryButton} href={`/universes/${universe.slug}?mode=practice`}>Explore practices</Link>
+        <Link className={styles.secondaryButton} href={`${universeHref(universe.slug)}?mode=practice`}>Explore practices</Link>
       </section>
     </div>
   );
@@ -500,7 +501,7 @@ function AccessGate({
   universe: PracticeUniverse;
 }) {
   const copy = accessState === "account-required"
-    ? { title: "Sign in to continue", body: "This uses your shared Yoga With Ethan account—there is no separate User Manual login.", action: "Sign in", href: `/login?next=${encodeURIComponent(`/universes/${universe.slug}?mode=${mode}`)}` }
+    ? { title: "Sign in to continue", body: "This uses your shared Yoga With Ethan account—there is no separate User Manual login.", action: "Sign in", href: `/login?next=${encodeURIComponent(`${universeHref(universe.slug)}?mode=${mode}`)}` }
     : accessState === "purchased-progression-locked"
       ? { title: `Complete Level ${universe.unlockAfterLevel} first`, body: "Your lifetime ownership is secure. Progression still happens in order, so the written tutorial opens when its Deeper. Slower. Easier. level is complete.", action: `Open Level ${universe.unlockAfterLevel}`, href: `/levels/${universe.unlockAfterLevel}` }
       : accessState === "payment-locked"
@@ -517,7 +518,7 @@ function AccessGate({
         {onShowFaqs ? (
           <button className={styles.secondaryButton} type="button" onClick={onShowFaqs}>Read free FAQs</button>
         ) : (
-          <Link className={styles.secondaryButton} href={`/universes/${universe.slug}?mode=faqs`}>Read free FAQs</Link>
+          <Link className={styles.secondaryButton} href={`${universeHref(universe.slug)}?mode=faqs`}>Read free FAQs</Link>
         )}
       </div>
       {showPurchase ? <PurchaseDisclosure className={styles.purchase} primaryHref={`/paid?feature=${universe.slug}`} /> : null}
@@ -554,7 +555,7 @@ export function PracticeDetailView({
       <WorldHeader completedLevelCount={completedLevelCount} member={member} universe={universe} />
       <div className={styles.playerShell}>
         <div className={styles.playerTop}>
-          <Link className={styles.playerBack} href={`/universes/${universe.slug}?mode=practice`} transitionTypes={["nav-back"]}><ArrowLeft size={16} weight="bold" /> Back to {universe.title}</Link>
+          <Link className={styles.playerBack} href={`${universeHref(universe.slug)}?mode=practice`} transitionTypes={["nav-back"]}><ArrowLeft size={16} weight="bold" /> Back to {universe.title}</Link>
           <span className={styles.gateChip}>Coming soon</span>
         </div>
         {!accessible ? (

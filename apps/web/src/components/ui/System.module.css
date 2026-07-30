@@ -395,6 +395,66 @@
 .emptyState .text { max-width: 24rem; text-wrap: balance; }
 .emptyIcon { align-items: center; background: rgba(255, 255, 255, 0.72); border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 999px; color: var(--theme-color-ink-strong); display: flex; height: 3.5rem; justify-content: center; margin-bottom: 1rem; width: 3.5rem; }
 
+:global(html[data-um-theme="dark"]) .buttonSecondary,
+:global(html[data-um-theme="dark"]) .buttonGhost,
+:global(html[data-um-theme="dark"]) .iconButton,
+:global(html[data-um-theme="dark"]) .chip,
+:global(html[data-um-theme="dark"]) .notice,
+:global(html[data-um-theme="dark"]) .field,
+:global(html[data-um-theme="dark"]) .checkboxControl,
+:global(html[data-um-theme="dark"]) .emptyIcon {
+  --button-bg: rgba(255,255,255,.07);
+  --button-border: rgba(255,255,255,.11);
+  border-color: rgba(255,255,255,.1);
+  background: rgba(255,255,255,.06);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.07);
+}
+
+:global(html[data-um-theme="dark"]) .buttonRainbow,
+:global(html[data-um-theme="dark"]) .chipSelected {
+  --button-color: #f4f4f5;
+  --button-bg: linear-gradient(112deg, rgba(255,132,183,.13), rgba(118,208,255,.11), rgba(255,224,130,.09));
+  --button-border: rgba(255,255,255,.12);
+  background: linear-gradient(112deg, rgba(255,132,183,.13), rgba(118,208,255,.11), rgba(255,224,130,.09));
+  border-color: rgba(255,255,255,.12);
+  color: #f4f4f5;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+:global(html[data-um-theme="dark"]) .surface {
+  border-color: rgba(255,255,255,.1);
+  background:
+    linear-gradient(112deg, rgba(255,255,255,.065), rgba(255,255,255,.025) 48%, rgba(255,255,255,.045)),
+    url("/textures/lifetime-offer-pearl.png") center / cover no-repeat,
+    var(--theme-color-surface-raised);
+  box-shadow: 0 16px 38px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.07);
+}
+
+:global(html[data-um-theme="dark"]) .surfacePlain {
+  background: rgba(255,255,255,.035);
+}
+
+:global(html[data-um-theme="dark"]) .noticeError {
+  background: color-mix(in srgb, var(--theme-color-danger) 12%, #181b21);
+}
+
+:global(html[data-um-theme="dark"]) .noticeWarning {
+  background: color-mix(in srgb, var(--theme-color-warning) 12%, #181b21);
+}
+
+:global(html[data-um-theme="dark"]) .noticeSuccess,
+:global(html[data-um-theme="dark"]) .chipSuccess {
+  background: color-mix(in srgb, var(--theme-color-completed) 12%, #181b21);
+  border-color: color-mix(in srgb, var(--theme-color-completed) 32%, #181b21);
+  color: color-mix(in srgb, var(--theme-color-completed) 72%, white);
+}
+
+:global(html[data-um-theme="dark"]) .checkboxInput:checked + .checkboxControl {
+  background: #f4f4f5;
+  border-color: #f4f4f5;
+  color: #17191d;
+}
+
 .skeleton { animation: skeleton-pulse 1.8s ease-in-out infinite; background: linear-gradient(90deg, var(--theme-color-surface-soft), var(--theme-color-border), var(--theme-color-surface-soft)); background-size: 220% 100%; border-radius: var(--theme-radius-sm); min-height: 1rem; }
 
 @keyframes skeleton-pulse { 0% { background-position: 100% 0; } 100% { background-position: -120% 0; } }

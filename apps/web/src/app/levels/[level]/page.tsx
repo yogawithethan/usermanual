@@ -11,7 +11,6 @@ import { ChapterNavigator } from "@/components/detail/ChapterNavigator";
 import { LevelCompletion } from "@/components/detail/LevelCompletion";
 import {
   DetailArticle,
-  DetailBackLink,
   DetailExperience,
   DetailGate,
   DetailGatePrimary,
@@ -33,8 +32,6 @@ import type {
 } from "@islands/content";
 import {
   getTutorial,
-  getUniversePractices,
-  practiceUniverses,
   tutorials,
 } from "@islands/content";
 import { getPublishedTutorial } from "@/lib/tutorial-content";
@@ -71,6 +68,7 @@ export default async function LevelPage({ params }: LevelPageProps) {
     ? normalizeDevProgressMode(cookieStore.get(DEV_PROGRESS_COOKIE)?.value)
     : "real";
   const isDevProgressOverride = devProgressMode !== "real";
+  const hasDevDetailAccess = devAccessPreview.fullAccess || isDevProgressOverride;
   const tutorial = await getPublishedTutorial(level);
 
   if (!tutorial) {
@@ -90,13 +88,13 @@ export default async function LevelPage({ params }: LevelPageProps) {
   };
 
   const memberSession = await getYweMemberSession();
-  const userId = memberSession.signedIn || devAccessPreview.signedIn
+  const userId = memberSession.signedIn || devAccessPreview.signedIn || isDevProgressOverride
     ? "shared-ywe-member"
     : null;
 
   if (
     !userId &&
-    !devAccessPreview.signedIn &&
+    !hasDevDetailAccess &&
     cookieStore.get(WELCOME_COMPLETED_COOKIE)?.value !== "1"
   ) {
     return <LevelGate tutorial={tutorial} theme={detailTheme} state="Start Here required" body="The welcome experience comes first. Finish it once, then create or enter your shared Yoga With Ethan account to open Level 1." action={<><DetailGatePrimary href={`/welcome?next=/levels/${tutorial.level}`}>Begin Start Here</DetailGatePrimary><DetailGateSecondary>Back</DetailGateSecondary></>} icon="spark" />;
@@ -125,11 +123,11 @@ export default async function LevelPage({ params }: LevelPageProps) {
 
   const profile = memberSession.profile;
 
-  if (!isDevProgressOverride && !profile?.welcomeCompletedAt) {
+  if (!hasDevDetailAccess && !profile?.welcomeCompletedAt) {
     return <LevelGate tutorial={tutorial} theme={detailTheme} state="Start Here required" body="Complete the welcome experience before opening the first level. You only need to do this once." action={<><DetailGatePrimary href={`/welcome?next=/levels/${tutorial.level}`}>Continue Start Here</DetailGatePrimary><DetailGateSecondary>Back</DetailGateSecondary></>} icon="spark" />;
   }
 
-  if (!isDevProgressOverride && !profile?.onboardingCompletedAt) {
+  if (!hasDevDetailAccess && !profile?.onboardingCompletedAt) {
     return <LevelGate tutorial={tutorial} theme={detailTheme} state="One last step" body="Set your starting preferences so the User Manual can keep your place and send only the reminders you want." action={<><DetailGatePrimary href={`/onboarding?next=/levels/${tutorial.level}`}>Finish account setup</DetailGatePrimary><DetailGateSecondary>Back</DetailGateSecondary></>} icon="account" />;
   }
 
@@ -154,9 +152,6 @@ export default async function LevelPage({ params }: LevelPageProps) {
     ? await commentsResponse.json() as { comments?: any[] }
     : null;
   const comments = commentsPayload?.comments ?? [];
-  const practices = practiceUniverses
-    .filter((universe) => universe.unlockAfterLevel === tutorial.level)
-    .flatMap((universe) => getUniversePractices(universe.slug));
   const levelCompleted = progress?.some((item) => item.level_number === tutorial.level && item.status === "completed") ?? false;
   const stepSections = tutorial.sections.filter(isStepSection);
   const navigableSections = stepSections.length
@@ -174,8 +169,8 @@ export default async function LevelPage({ params }: LevelPageProps) {
       kind: "chapter" as const,
       label: plainTitle(section.title),
     })),
-    { id: "complete", kind: "complete" as const, label: `Complete Level ${tutorial.level}` },
-    { id: "faq", kind: "faq" as const, label: "Frequently asked questions" },
+    { id: "complete", kind: "complete" as const, label: "Complete level" },
+    { id: "faq", kind: "faq" as const, label: "FAQs" },
     { id: "practices", kind: "practice" as const, label: "Practice" },
   ];
   const firstStepIndex = tutorial.sections.findIndex(isStepSection);
@@ -199,8 +194,7 @@ export default async function LevelPage({ params }: LevelPageProps) {
   return (
     <ThemeProvider theme={dseTheme} className="flex-1">
       <DetailExperience theme={detailTheme} transitionName={`detail-level-${tutorial.level}`}>
-        <DetailBackLink label="Back to levels" />
-        <DetailHero eyebrow={`Level ${tutorial.level}`} icon="/tutorial-icons/dse-cloud-icon.svg" subtitle={tutorial.subtitle} title={tutorial.hero} atmosphere="clouds" />
+        <DetailHero icon="/tutorial-icons/dse-cloud-icon.svg" subtitle={tutorial.subtitle} title={tutorial.title} atmosphere="clouds" />
         <ChapterNavigator chapters={chapters} />
         <DetailArticle>
           <DetailVideo vimeoId={tutorial.vimeoId} />
@@ -281,16 +275,7 @@ export default async function LevelPage({ params }: LevelPageProps) {
             level={tutorial.level}
           />
 
-          <AssociatedPractices practices={practices.map((practice) => ({
-            description: practice.description,
-            duration: practice.durationMinutes,
-            href: entitled
-              ? `/universes/${practice.universeSlug}/practices/${practice.id}`
-              : "/paid?feature=practice",
-            id: practice.id,
-            kind: practice.kind,
-            title: practice.title,
-          }))} />
+          <AssociatedPractices practices={[]} />
           {!hasAuthoredChecklists ? (
             <InteractiveChecklist items={tutorial.checklist} storageKey={`level-${tutorial.level}`} />
           ) : null}
@@ -428,13 +413,13 @@ function LessonComments({
     return (
       <section id="comments" className="scroll-mt-12 pt-16">
         <h2
-          className="text-[32px] font-bold text-[#111111]"
+          className={`${detailStyles.communityHeading} text-[32px] font-bold`}
           style={{ fontFamily: headingFont }}
         >
           Community Questions
         </h2>
-        <div className="shape-card mt-5 border border-[#E4DED8] bg-white p-5 shadow-[0_8px_24px_rgba(12,19,45,0.05)]">
-          <p className="text-[17px] leading-7 text-[#536071]">
+        <div className={`${detailStyles.communityCard} shape-card mt-5 p-5`}>
+          <p className={`${detailStyles.communityMuted} text-[17px] leading-7`}>
             Reading community questions and asking Ethan a question are included
             in the lifetime User Manual companion.
           </p>
@@ -454,12 +439,12 @@ function LessonComments({
   return (
     <section id="comments" className="scroll-mt-12 pt-16">
       <h2
-        className="text-[32px] font-bold text-[#111111]"
+        className={`${detailStyles.communityHeading} text-[32px] font-bold`}
         style={{ fontFamily: headingFont }}
       >
         Community Notes
       </h2>
-      <form action={submitLessonComment} className="shape-card mt-5 border border-[#E4DED8] bg-white p-5 shadow-[0_8px_24px_rgba(12,19,45,0.05)]">
+      <form action={submitLessonComment} className={`${detailStyles.communityCard} shape-card mt-5 p-5`}>
         <input type="hidden" name="level" value={level} />
         <label className="block">
           <span className="text-[13px] font-bold uppercase tracking-[0.1em] text-[#7A7772]">
@@ -471,7 +456,7 @@ function LessonComments({
             minLength={3}
             maxLength={2000}
             rows={4}
-            className="shape-card mt-3 w-full border border-[#E4DED8] bg-[#FFFCF8] px-4 py-3 text-[17px] leading-6 text-[#2D2B2A] outline-none focus:ring-4"
+            className={`${detailStyles.communityField} shape-card mt-3 w-full px-4 py-3 text-[17px] leading-6 outline-none focus:ring-4`}
             style={{ ["--tw-ring-color" as string]: `${accent}22` }}
           />
         </label>
@@ -489,17 +474,17 @@ function LessonComments({
           comments.map((comment) => (
             <article
               key={comment.id}
-              className="shape-card border border-[#E4DED8] bg-white p-5 shadow-[0_8px_24px_rgba(12,19,45,0.04)]"
+              className={`${detailStyles.communityCard} shape-card p-5`}
             >
               <div className="flex items-center justify-between gap-3">
-                <p className="text-[14px] font-bold text-[#111111]">
+                <p className={`${detailStyles.communityHeading} text-[14px] font-bold`}>
                   {displayName(comment.profiles)}
                 </p>
                 <p className="text-[12px] font-semibold text-[#8A8580]">
                   {formatCommentDate(comment.created_at)}
                 </p>
               </div>
-              <p className="mt-3 text-[17px] leading-7 text-[#2D2B2A]">
+              <p className={`${detailStyles.communityCopy} mt-3 text-[17px] leading-7`}>
                 {comment.body}
               </p>
               {comment.lesson_answers?.length ? (
@@ -509,7 +494,7 @@ function LessonComments({
                       <p className="text-[12px] font-black uppercase tracking-[0.1em]" style={{ color: answer.is_teacher_answer ? accent : "#8A8580" }}>
                         {answer.is_teacher_answer ? "Teacher answer" : displayName(answer.profiles)}
                       </p>
-                      <p className="mt-1 text-[15px] leading-6 text-[#3A3632]">
+                      <p className={`${detailStyles.communityCopy} mt-1 text-[15px] leading-6`}>
                         {answer.body}
                       </p>
                     </div>
@@ -519,7 +504,7 @@ function LessonComments({
             </article>
           ))
         ) : (
-          <div className="shape-card border border-dashed border-[#D8D0C7] px-5 py-5 text-[16px] text-[#7A7772]">
+          <div className={`${detailStyles.communityEmpty} shape-card border border-dashed px-5 py-5 text-[16px]`}>
             No public notes yet.
           </div>
         )}

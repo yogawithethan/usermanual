@@ -1,9 +1,10 @@
 import type { CSSProperties, ReactNode } from "react";
 import { ViewTransition } from "react";
 import Link from "next/link";
+import type { PracticeUniverse } from "@islands/content";
 
-import { PranaLightningField } from "@/components/motion/PranaLightning";
-import floatingStyles from "@/components/ui/FloatingControl.module.css";
+import { UniverseAtmosphere } from "@/components/motion/UniverseAtmosphere";
+import { SystemIcon } from "@/components/ui/SystemIcon";
 import { BrandedVimeoPlayer } from "./BrandedVimeoPlayer";
 import styles from "./DetailExperience.module.css";
 
@@ -79,7 +80,6 @@ export function DetailGate({
 }) {
   return (
     <DetailExperience theme={theme} transitionName={transitionName}>
-      <DetailBackLink />
       <section className={styles.gate} aria-labelledby="detail-gate-title">
         <div className={styles.gateCard}>
           {icon ? <span className={styles.gateIcon} aria-hidden><GateIcon type={icon} /></span> : null}
@@ -127,59 +127,38 @@ function GateIcon({ type }: { type: "account" | "clock" | "lock" | "spark" }) {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="10" width="14" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>;
 }
 
-export function DetailBackLink({ label = "Back to The User Manual" }: { label?: string }) {
-  return (
-    <Link href="/" transitionTypes={["nav-back"]} aria-label={label} className={`${floatingStyles.control} ${styles.back}`}>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d="m15 18-6-6 6-6" />
-      </svg>
-    </Link>
-  );
-}
-
 export function DetailHero({
   atmosphere = "clouds",
-  eyebrow,
   icon,
   logo,
   subtitle,
   title,
+  universeSlug,
 }: {
-  atmosphere?: "clouds" | "lightning" | "still";
-  eyebrow: string;
+  atmosphere?: "clouds" | "still";
   icon: string;
   logo?: string;
   subtitle: string;
   title: string;
+  universeSlug?: PracticeUniverse["slug"];
 }) {
   return (
-    <section className={styles.hero} aria-labelledby="detail-title">
-      {atmosphere === "clouds" ? (
+    <section className={styles.hero} aria-labelledby="detail-title" data-universe={universeSlug}>
+      {!universeSlug && atmosphere === "clouds" ? (
         <>
           <img className={`${styles.cloud} ${styles.cloudA}`} src="/clouds/cloud-2.png" alt="" aria-hidden />
           <img className={`${styles.cloud} ${styles.cloudB}`} src="/clouds/cloud-2.png" alt="" aria-hidden />
         </>
       ) : null}
-      {atmosphere === "lightning" ? (
-        <PranaLightningField
-          className="universe-fx universe-fx--pf"
-          firstClassName="universe-fx__lottie universe-fx__lottie--one"
-          secondClassName="universe-fx__lottie universe-fx__lottie--two"
-        />
-      ) : null}
+      {universeSlug ? <UniverseAtmosphere className={styles.heroAtmosphere} slug={universeSlug} /> : null}
       <div className={styles.heroContent}>
         <span className={styles.heroIcon} aria-hidden>
           <span className={styles.heroIconMask} style={{ mask: `url('${icon}') center / contain no-repeat`, WebkitMask: `url('${icon}') center / contain no-repeat` }} />
         </span>
         {logo ? <img className={styles.heroLogo} src={logo} alt="" aria-hidden /> : <h1 id="detail-title" className={styles.heroTitle}>{title}</h1>}
         {logo ? <h1 id="detail-title" className="sr-only">{title}</h1> : null}
-        <p className={styles.heroEyebrow}>{eyebrow}</p>
         <p className={styles.heroSubtitle}>{subtitle}</p>
       </div>
-      <span className={styles.heroHint} aria-hidden>
-        Begin
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14" /><path d="m18 13-6 6-6-6" /></svg>
-      </span>
     </section>
   );
 }
@@ -200,7 +179,7 @@ export function DetailSection({ children, compactAfter = false, id, title }: { c
 export function DetailVideo({ vimeoId }: { vimeoId?: string | null }) {
   const usableId = vimeoId && vimeoId !== "000000000" ? vimeoId : null;
   return (
-    <DetailSection id="video" title="Start here">
+    <DetailSection id="video" title="Video">
       <div className={styles.videoFrame}>
         {usableId ? (
           <BrandedVimeoPlayer source={usableId} />
@@ -208,7 +187,7 @@ export function DetailVideo({ vimeoId }: { vimeoId?: string | null }) {
           <div className={styles.videoPoster}>
             <div>
               <span className={styles.play} aria-hidden>
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5L8 5.5Z" /></svg>
+                <SystemIcon name="play" />
               </span>
               <p className={styles.videoLabel}>Video · coming soon</p>
             </div>

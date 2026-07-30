@@ -76,6 +76,19 @@
 .close:focus-visible { outline: 2px solid color-mix(in srgb, var(--detail-accent) 42%, transparent); outline-offset: 2px; }
 @keyframes blink { 50% { opacity: 0; } }
 
+:global(html[data-um-theme="dark"]) .marker {
+  background: color-mix(in srgb, var(--detail-accent-soft) 55%, #181b21);
+}
+
+:global(html[data-um-theme="dark"]) .marker:hover {
+  background: rgb(255 255 255 / 10%);
+}
+
+:global(html[data-um-theme="dark"]) .hint {
+  background: #f4f4f5;
+  color: #17191d;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .marker, .hint, .insertion { transition: none; }
   .caret { animation: none; }

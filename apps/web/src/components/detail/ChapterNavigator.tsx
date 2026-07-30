@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
-import { ArrowUp, PlayCircle, Question, SealCheck, SortAscending, SortDescending, Target } from "@phosphor-icons/react";
+import { ArrowUp, Question, SealCheck, SortAscending, SortDescending, Target } from "@phosphor-icons/react";
+import { Play } from "lucide-react";
 
 import floatingStyles from "@/components/ui/FloatingControl.module.css";
 import { useDirectionalTopChrome } from "@/components/ui/useDirectionalTopChrome";
@@ -20,6 +21,7 @@ export function ChapterNavigator({ chapters }: { chapters: DetailChapter[] }) {
   const chromeHidden = useDirectionalTopChrome();
 
   useEffect(() => {
+    const restoreTimers = new Set<number>();
     const update = () => {
       frame.current = 0;
       const scrollable = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
@@ -30,18 +32,49 @@ export function ChapterNavigator({ chapters }: { chapters: DetailChapter[] }) {
         const element = document.getElementById(id);
         if (element && element.getBoundingClientRect().top <= activationLine) next = id;
       });
+      const atPageEnd =
+        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 8;
+      if (atPageEnd) next = chapters.at(-1)?.id ?? next;
       setActiveId(next);
     };
     const schedule = () => {
       if (frame.current) return;
       frame.current = window.requestAnimationFrame(update);
     };
+    const settleAfterRestore = () => {
+      if (frame.current) {
+        window.cancelAnimationFrame(frame.current);
+        frame.current = 0;
+      }
+      [0, 120, 420, 1000].forEach((delay) => {
+        const timer = window.setTimeout(() => {
+          restoreTimers.delete(timer);
+          if (frame.current) {
+            window.cancelAnimationFrame(frame.current);
+            frame.current = 0;
+          }
+          update();
+          const hashId = decodeURIComponent(window.location.hash.slice(1));
+          if (chapters.some((chapter) => chapter.id === hashId)) setActiveId(hashId);
+        }, delay);
+        restoreTimers.add(timer);
+      });
+    };
+
     update();
+    settleAfterRestore();
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule);
+    window.addEventListener("pageshow", settleAfterRestore);
+    window.addEventListener("popstate", settleAfterRestore);
+    window.addEventListener("hashchange", settleAfterRestore);
     return () => {
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
+      window.removeEventListener("pageshow", settleAfterRestore);
+      window.removeEventListener("popstate", settleAfterRestore);
+      window.removeEventListener("hashchange", settleAfterRestore);
+      restoreTimers.forEach((timer) => window.clearTimeout(timer));
       if (frame.current) cancelAnimationFrame(frame.current);
     };
   }, [chapters]);
@@ -87,7 +120,7 @@ export function ChapterNavigator({ chapters }: { chapters: DetailChapter[] }) {
   }, [mobileOpen]);
 
   const chapterIcon = (kind: "chapter" | "complete" | "faq" | "practice" | "video" = "chapter") => {
-    if (kind === "video") return <PlayCircle aria-hidden weight="regular" />;
+    if (kind === "video") return <Play aria-hidden />;
     if (kind === "complete") return <SealCheck aria-hidden weight="regular" />;
     if (kind === "faq") return <Question aria-hidden weight="regular" />;
     if (kind === "practice") return <Target aria-hidden weight="regular" />;
@@ -125,7 +158,18 @@ export function ChapterNavigator({ chapters }: { chapters: DetailChapter[] }) {
     <>
       <nav aria-label="Tutorial chapters" className={styles.rail} style={{ "--reading-progress": progress } as CSSProperties}>
         {chapters.map((chapter) => (
-          <a key={chapter.id} href={`#${chapter.id}`} className={`${styles.railLink} ${activeId === chapter.id ? styles.railLinkActive : ""}`} aria-current={activeId === chapter.id ? "location" : undefined}>
+          <a
+            key={chapter.id}
+            href={`#${chapter.id}`}
+            data-kind={chapter.kind ?? "chapter"}
+            className={`${styles.railLink} ${activeId === chapter.id ? styles.railLinkActive : ""}`}
+            aria-current={activeId === chapter.id ? "location" : undefined}
+            onClick={(event) => {
+              event.preventDefault();
+              if (event.detail > 0) event.currentTarget.blur();
+              navigateTo(chapter.id);
+            }}
+          >
             <span className={styles.railLabel}>{chapter.label}</span><i className={styles.railDot} aria-hidden>{chapterIcon(chapter.kind)}</i>
           </a>
         ))}

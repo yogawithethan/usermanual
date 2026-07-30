@@ -37,7 +37,13 @@
   --ui-font-body: var(--font-app-ui), Poppins, Inter, system-ui, sans-serif;
   --ui-font-label: var(--font-app-ui), Poppins, Inter, system-ui, sans-serif;
   --app-chrome-bg: #f4f6f8;
+  --app-chrome-surface: #ffffff;
+  --app-chrome-surface-soft: #eceff3;
   --app-chrome-ink: #1e293b;
+  --app-chrome-muted: #687386;
+  --app-chrome-border: rgb(30 41 59 / 10%);
+  --app-chrome-control: rgb(255 255 255 / 78%);
+  --app-chrome-shadow: rgb(12 19 45 / 9%);
 }
 
 /* Shared User Manual geometry. Structural surfaces use the expressive
@@ -134,7 +140,13 @@ html[data-ywe-detail-header] drsti-header {
 html[data-um-theme="dark"] {
   color-scheme: dark;
   --app-chrome-bg: #101114;
+  --app-chrome-surface: #1b1d22;
+  --app-chrome-surface-soft: #15171b;
   --app-chrome-ink: #f1f2f4;
+  --app-chrome-muted: #a8adb7;
+  --app-chrome-border: rgb(255 255 255 / 12%);
+  --app-chrome-control: rgb(255 255 255 / 7%);
+  --app-chrome-shadow: rgb(0 0 0 / 34%);
 }
 
 html[data-um-theme="dark"] [data-theme] {
@@ -145,6 +157,15 @@ html[data-um-theme="dark"] [data-theme] {
   --theme-color-ink-strong: #fff !important;
   --theme-color-muted: #a8adb7 !important;
   --theme-color-border: rgb(255 255 255 / 12%) !important;
+  --theme-color-on-accent: #fff !important;
+  --theme-color-danger: #ff8190 !important;
+  --theme-color-warning: #ffc56f !important;
+}
+
+html[data-um-theme="dark"] drsti-header {
+  --bg: var(--app-chrome-bg);
+  --mobile-surface: rgb(16 17 20 / 94%);
+  --mobile-bar-bg: var(--mobile-surface);
 }
 
 html[data-ywe-shared-header] body {
@@ -152,7 +173,11 @@ html[data-ywe-shared-header] body {
 }
 
 html[data-ywe-shared-header][data-ywe-detail-header] body {
-  padding-top: 0;
+  padding-top: 0 !important;
+}
+
+html[data-ywe-detail-header] body {
+  padding-top: 0 !important;
 }
 
 @media (min-width: 768px) {

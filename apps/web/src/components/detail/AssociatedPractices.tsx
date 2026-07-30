@@ -1,6 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { createElement, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+
+import { SystemIcon } from "@/components/ui/SystemIcon";
 import { detailStyles as styles } from "./DetailExperience";
 
 export interface AssociatedPractice {
@@ -9,43 +12,118 @@ export interface AssociatedPractice {
   href: string;
   id: string;
   kind: string;
+  thumbnail?: string | null;
   title: string;
 }
 
+type ArchiveElement = HTMLElement & { config?: Record<string, unknown> };
+type SharedComponentsWindow = typeof window & {
+  YWESharedComponents?: { loading?: Promise<unknown> };
+};
+
+const PRACTICE_ARCHIVE_STYLE_ID = "user-manual-practice-archive-skin";
+
+function installPracticeArchiveSkin(archive: ArchiveElement) {
+  const filterBar = archive.shadowRoot?.querySelector("ywe-filter-bar");
+  const filterRoot = filterBar?.shadowRoot;
+  if (!filterRoot || filterRoot.getElementById(PRACTICE_ARCHIVE_STYLE_ID)) return;
+
+  const style = document.createElement("style");
+  style.id = PRACTICE_ARCHIVE_STYLE_ID;
+  style.textContent = `
+    .rail {
+      padding-bottom: 30px !important;
+    }
+  `;
+  filterRoot.appendChild(style);
+}
+
 export function AssociatedPractices({ practices }: { practices: AssociatedPractice[] }) {
-  const [query, setQuery] = useState("");
-  const filtered = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    if (!needle) return practices;
-    return practices.filter((practice) => `${practice.title} ${practice.kind} ${practice.description ?? ""}`.toLowerCase().includes(needle));
-  }, [practices, query]);
+  const router = useRouter();
+  const archiveRef = useRef<ArchiveElement | null>(null);
+  const [ready, setReady] = useState(false);
+  const items = useMemo(() => practices.map((practice) => ({
+    _status: "published",
+    detailUrl: practice.href,
+    durationLabel: practice.duration ? `${practice.duration} min` : "Coming soon",
+    durationSec: practice.duration ? practice.duration * 60 : 0,
+    excerpt: practice.description ?? "A guided practice film for this tutorial.",
+    id: practice.id,
+    thumbnail: practice.thumbnail || "/clouds/dse-placeholder.svg",
+    tier: "free",
+    title: practice.title,
+    topic: practice.kind.replaceAll("-", " "),
+    type: "Vimeo practice",
+  })), [practices]);
+
+  useEffect(() => {
+    let active = true;
+    const platformReady = (window as SharedComponentsWindow).YWESharedComponents?.loading ?? Promise.resolve();
+    void platformReady
+      .then(() => customElements.whenDefined("ywe-library-archive"))
+      .then(() => { if (active) setReady(true); });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!ready || !archiveRef.current) return;
+    const archive = archiveRef.current;
+    const installSkin = () => installPracticeArchiveSkin(archive);
+    archive.addEventListener("ywe:component-ready", installSkin);
+    archive.config = {
+      collection: "youtube",
+      completedIds: [],
+      emptyText: "Practice videos will appear here as their Vimeo films are finished.",
+      initialCount: items.length,
+      items,
+      pageSize: items.length,
+      paginate: false,
+      showProgressToggle: false,
+      shuffle: false,
+      view: "list",
+      viewer: { loggedIn: true, tier: "om" },
+      views: ["list", "grid", "rail"],
+    };
+    installSkin();
+    const frame = requestAnimationFrame(installSkin);
+    return () => {
+      cancelAnimationFrame(frame);
+      archive.removeEventListener("ywe:component-ready", installSkin);
+    };
+  }, [items, ready]);
 
   return (
-    <section id="practices" className={styles.section}>
-      <h2 className={styles.sectionTitle}>Practice this</h2>
-      <div className={styles.practiceTools}>
-        <label className="sr-only" htmlFor="detail-practice-search">Search associated practices</label>
-        <input id="detail-practice-search" className={styles.search} type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search these practices" />
+    <section
+      id="practices"
+      className={`${styles.section} ${styles.practiceCollection}`}
+      onClickCapture={(event) => {
+        if (event.button || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        const link = event.nativeEvent.composedPath().find(
+          (target) => target instanceof HTMLAnchorElement,
+        );
+        if (!link) return;
+        const destination = new URL(link.href, window.location.href);
+        if (destination.origin !== window.location.origin) return;
+        event.preventDefault();
+        window.history.replaceState(null, "", "#practices");
+        router.push(`${destination.pathname}${destination.search}${destination.hash}`);
+      }}
+    >
+      <div className={styles.practiceHeading}>
+        <h2 className={styles.sectionTitle}>Practice videos</h2>
+        <p>Watch the Vimeo practice collection connected to this tutorial. Unfinished films remain clearly marked until release.</p>
       </div>
-      {filtered.length ? (
-        <div className={styles.practiceGrid}>
-          {filtered.map((practice) => (
-            <article className={styles.practiceCard} key={practice.id}>
-              <span className={styles.practiceIcon} aria-hidden>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 12v-2" /><path d="M8 16V8" /><path d="M12 19V5" /><path d="M16 16V8" /><path d="M20 12v-2" /></svg>
-              </span>
-              <div>
-                <p className={styles.practiceMeta}>{practice.kind}{practice.duration ? ` · ${practice.duration} min` : ""}</p>
-                <h3 className={styles.practiceTitle}>{practice.title}</h3>
-                {practice.description ? <p className={styles.practiceDescription}>{practice.description}</p> : null}
-              </div>
-              <a className={styles.practiceAction} href={practice.href} aria-label={`Open ${practice.title}`}>
-                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M8 5.5v13l11-6.5L8 5.5Z" /></svg>
-              </a>
-            </article>
-          ))}
+      {ready ? createElement("ywe-library-archive", { ref: archiveRef }) : (
+        <div className={styles.practiceFallback} aria-live="polite">
+          {practices.length ? practices.map((practice) => (
+            <a href={practice.href} key={practice.id}>
+              <span aria-hidden><SystemIcon name="video" /></span>
+              <span><strong>{practice.title}</strong><small>{practice.duration ? `${practice.duration} min` : "Coming soon"}</small></span>
+              <SystemIcon name="play" aria-hidden />
+            </a>
+          )) : <p className={styles.empty}>Level-specific practice videos will appear here as their Vimeo films are finished.</p>}
         </div>
-      ) : <p className={styles.empty}>{practices.length ? "No associated practices match that search." : "Associated practices will appear here as their audio and films are finished."}</p>}
+      )}
     </section>
   );
 }

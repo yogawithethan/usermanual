@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
-import { GraduationCap, User } from "@phosphor-icons/react";
+import { GraduationCap, MoonStars, User } from "@phosphor-icons/react";
 
 import { Icon } from "@/components/settings/icons";
 import type { IslandsInfo } from "@/components/settings/IslandsWordmark";
@@ -12,10 +12,11 @@ import { useDirectionalTopChrome } from "@/components/ui/useDirectionalTopChrome
 import { useSettings } from "@/lib/settings/SettingsContext";
 import styles from "./SettingsPanel.module.css";
 
-type Tab = "home" | "account" | "developer";
+type Tab = "home" | "appearance" | "account" | "developer";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "home", label: "Home" },
+  { id: "appearance", label: "Theme" },
   { id: "account", label: "Account" },
   { id: "developer", label: "Dev" },
 ];
@@ -84,7 +85,7 @@ function SettingsTabs({ tab, onChange }: { tab: Tab; onChange: (tab: Tab) => voi
       style={{ "--active-tab": activeIndex } as CSSProperties}
     >
       <span className={styles.tabSlider} aria-hidden />
-      <div className="relative z-10 grid h-full grid-cols-3 gap-1">
+      <div className="relative z-10 grid h-full grid-cols-4 gap-1">
         {TABS.map((item) => {
           const active = item.id === tab;
           return (
@@ -211,6 +212,7 @@ export function SettingsLauncher({ islandsInfo, showLauncher = true }: { islands
 
 function SettingsTabIcon({ tab }: { tab: Tab }) {
   if (tab === "home") return <GraduationCap aria-hidden size={21} weight="regular" />;
+  if (tab === "appearance") return <MoonStars aria-hidden size={21} weight="regular" />;
   if (tab === "account") return <User aria-hidden size={21} weight="regular" />;
   return <SettingsGearIcon className="h-[21px] w-[21px]" />;
 }

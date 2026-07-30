@@ -1,7 +1,7 @@
 .root {
   --active-mode: 0;
   color: #25211f;
-  font-family: var(--ui-font-body);
+  font-family: var(--font-app-ui), Poppins, Inter, system-ui, sans-serif;
 }
 
 .tabs {
