@@ -37,7 +37,7 @@ export function YwePasswordlessAccess({
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: normalizedEmail, return: returnUrl }),
+        body: JSON.stringify({ email: normalizedEmail, return: returnUrl, mode }),
       });
       const data = (await response.json().catch(() => ({}))) as {
         error?: string;
@@ -48,7 +48,10 @@ export function YwePasswordlessAccess({
       }
       setStatus({
         kind: "success",
-        message: "Check your email. Your link will bring you back to this page.",
+        message:
+          mode === "signup"
+            ? "Check your email to complete your Yoga with Ethan account."
+            : "Check your email. Your link will bring you back to this page.",
       });
     } catch (error) {
       setStatus({
