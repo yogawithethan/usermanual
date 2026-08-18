@@ -202,7 +202,7 @@ export function SharedYweHeader() {
   const headerRef = useRef<SharedHeaderElement | null>(null);
   const pathname = usePathname();
   const isDetailPage = /^\/(levels|universes)\//.test(pathname);
-  const enabled = !pathname.startsWith("/ui-lab");
+  const enabled = !pathname.startsWith("/ui-lab") && !pathname.startsWith("/checkout");
   const signedIn = Boolean(user || devSimulateSignedIn);
   const isDark = theme === "dark" || theme === "oled";
   const hasUserManualAccess = entitled || purchased;

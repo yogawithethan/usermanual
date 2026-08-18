@@ -12,7 +12,7 @@ export function PurchaseUnlockCard() {
   const { devSimulateSignedIn, purchased } = useSettings();
   const signedIn = Boolean(user || devSimulateSignedIn);
   const primaryHref = "/paid?feature=full-tutorial";
-  const excluded = ["/login", "/paid", "/ui-lab", "/welcome", "/onboarding"]
+  const excluded = ["/login", "/paid", "/checkout", "/ui-lab", "/welcome", "/onboarding"]
     .some((route) => pathname?.startsWith(route));
 
   if (purchased || excluded) {
