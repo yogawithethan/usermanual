@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 
 import { getUserManualEntitlement } from "@/lib/entitlements";
 import { USER_MANUAL_LEGAL_VERSION, USER_MANUAL_PRIVACY_VERSION } from "@/lib/legal";
-import { callYweMemberApi } from "@/lib/ywe-member-api";
 import { createUserManualCheckoutSession, getStripeReadiness } from "@/lib/stripe";
 
 export async function startUserManualCheckout(formData: FormData) {
@@ -57,21 +56,20 @@ export async function startUserManualCheckout(formData: FormData) {
     redirect(session.url);
   }
 
-  const response = await callYweMemberApi("/api/stripe/user-manual/checkout", {
-    body: JSON.stringify({
-      feature,
-      origin,
-      privacyVersion,
-      termsAccepted,
-      termsVersion,
-    }),
-    method: "POST",
+  // ONE TILL (ywe docs/SPEC_STORE.md §6.6). The tutorial used to mint its own
+  // Stripe Checkout session through the worker, which meant the User Manual
+  // could be sold by two paths that did not know about each other. It now hands
+  // off to the unified checkout, which prices it, takes the money, and fulfils
+  // through fulfilProductAssets — the same `purchased:user_manual` tag this
+  // path already relied on, reached by one route instead of two.
+  //
+  // Everything above is unchanged: the terms gate, the sign-in redirect and the
+  // already-entitled short-circuit are this page's contract and still run here.
+  const checkoutOrigin = process.env.NEXT_PUBLIC_YWE_ACCOUNT_ORIGIN ?? "https://my.yogawithethan.com";
+  const params = new URLSearchParams({
+    buy: "user-manual",
+    from: "tutorial",
+    return: origin,
   });
-  const session = (await response.json().catch(() => ({}))) as { url?: string; error?: string };
-
-  if (!response.ok || !session.url) {
-    throw new Error(session.error ?? "Stripe did not return a Checkout URL.");
-  }
-
-  redirect(session.url);
+  redirect(`${checkoutOrigin.replace(/\/+$/, "")}/checkout?${params.toString()}`);
 }
