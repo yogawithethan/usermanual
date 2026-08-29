@@ -9,3 +9,8 @@ export async function GET(request: Request) {
 export async function PATCH(request: Request) {
   return proxyYweMemberApi(request, "/api/release-interest/user-manual");
 }
+
+// Anonymous launch-interest capture from the Coming Soon gate.
+export async function POST(request: Request) {
+  return proxyYweMemberApi(request, "/api/release-interest/user-manual");
+}

@@ -1,5 +1,9 @@
 export const USER_MANUAL_PRICE_CENTS = 14_400;
 export const USER_MANUAL_PRICE_LABEL = "$144";
+// Pre-launch preorder price — must match the `preorder` variant on the
+// `user-manual` offerings row (ywe docs/SPEC_USER_MANUAL_COMING_SOON.md).
+export const USER_MANUAL_PREORDER_PRICE_CENTS = 9_000;
+export const USER_MANUAL_PREORDER_PRICE_LABEL = "$90";
 
 export const USER_MANUAL_PURCHASE_BENEFITS = [
   {

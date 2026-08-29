@@ -25,6 +25,13 @@ import {
 import { ViewTransition, type CSSProperties } from "react";
 import { LibraryModeSwitcher, type LibraryMode } from "@/components/library/LibraryModeSwitcher";
 import { HomeLibraryView } from "@/components/library/HomeLibraryViews";
+import { ComingSoonGate } from "@/components/launch/ComingSoonGate";
+import {
+  FULL_PRICE_LABEL,
+  PREORDER_PRICE_LABEL,
+  preorderCheckoutUrl,
+  userManualComingSoon,
+} from "@/lib/launch";
 import styles from "./page.module.css";
 
 interface LevelSpec {
@@ -181,9 +188,18 @@ export default async function Home({ searchParams }: HomePageProps) {
     } satisfies LevelSpec & { href: string };
   });
   const showWelcome = !hasCompletedWelcome;
+  // Entitled members (preorder buyers included, once launched) never see the gate.
+  const showComingSoon = userManualComingSoon() && !isEntitled;
 
   return (
     <ThemeProvider theme={dseTheme} className="flex-1">
+      {showComingSoon && (
+        <ComingSoonGate
+          checkoutUrl={preorderCheckoutUrl()}
+          priceLabel={PREORDER_PRICE_LABEL}
+          fullPriceLabel={FULL_PRICE_LABEL}
+        />
+      )}
       <main
         className={`${styles.homeShell} flex min-h-[100dvh] flex-col items-center px-5 py-8 md:py-12`}
         style={{ background: "var(--theme-color-surface)" }}

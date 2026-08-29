@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 
 import { useAuth } from "@/lib/settings/AuthContext";
 import { useSettings } from "@/lib/settings/SettingsContext";
+import { userManualComingSoon } from "@/lib/launch";
 import { PurchaseDisclosure } from "@/components/purchase/PurchaseDisclosure";
 
 export function PurchaseUnlockCard() {
@@ -15,7 +16,9 @@ export function PurchaseUnlockCard() {
   const excluded = ["/login", "/paid", "/ui-lab", "/welcome", "/onboarding"]
     .some((route) => pathname?.startsWith(route));
 
-  if (purchased || excluded) {
+  // Pre-launch, the Coming Soon gate carries the (preorder) sell — a $144
+  // unlock bar under a $90 dialog would contradict it.
+  if (purchased || excluded || userManualComingSoon()) {
     return null;
   }
 

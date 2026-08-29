@@ -3,7 +3,8 @@ import Link from "next/link";
 import { YwePasswordlessAccess } from "@/components/auth/YwePasswordlessAccess";
 import { ButtonLink } from "@/components/ui/System";
 import { getUserManualEntitlement } from "@/lib/entitlements";
-import { USER_MANUAL_PRICE_LABEL } from "@/lib/purchaseContract";
+import { userManualComingSoon } from "@/lib/launch";
+import { USER_MANUAL_PREORDER_PRICE_LABEL, USER_MANUAL_PRICE_LABEL } from "@/lib/purchaseContract";
 import { ThemeProvider } from "@/themes/ThemeProvider";
 import { dseTheme } from "@/themes/dse";
 
@@ -38,6 +39,11 @@ function PurchaseShell({ children }: { children: React.ReactNode }) {
 export default async function PaidPage({ searchParams }: PaidPageProps) {
   const params = await searchParams;
   const feature = params.feature ?? "full-tutorial";
+  // During the pre-launch window the unified checkout's only live variant is the
+  // $90 preorder, so the label must agree with what Stripe will actually charge.
+  const priceLabel = userManualComingSoon()
+    ? USER_MANUAL_PREORDER_PRICE_LABEL
+    : USER_MANUAL_PRICE_LABEL;
   const entitlement = await getUserManualEntitlement();
   const returnTo = `/paid?feature=${encodeURIComponent(feature)}`;
 
@@ -70,7 +76,7 @@ export default async function PaidPage({ searchParams }: PaidPageProps) {
           </svg>
         </Link>
         <p className="text-center font-[var(--ui-font-eyebrow)] text-[12px] font-bold uppercase tracking-[0.16em] text-[#6B655E]">
-          {USER_MANUAL_PRICE_LABEL} · one payment
+          {priceLabel} · one payment
         </p>
         <div className="mt-4">
           <YwePasswordlessAccess next={returnTo} />
@@ -117,7 +123,7 @@ export default async function PaidPage({ searchParams }: PaidPageProps) {
   return (
     <PurchaseShell>
       <p className="text-center font-[var(--ui-font-eyebrow)] text-[12px] font-bold uppercase tracking-[0.16em] text-[#6B655E]">
-        The User Manual · {USER_MANUAL_PRICE_LABEL}
+        The User Manual · {priceLabel}
       </p>
       <h1 className="mt-3 text-balance text-center font-[var(--ui-font-display)] text-[31px] font-bold leading-tight text-[#171411]">
         One payment. Yours forever.
