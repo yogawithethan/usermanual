@@ -47,6 +47,7 @@ export default function RootLayout({
         <Script id="user-manual-theme" strategy="beforeInteractive">
           {themeBootstrap}
         </Script>
+        <Script src="/ywe-pixel.js?v=20260906-base-only" strategy="afterInteractive" />
         <AppProviders>
           <ViewTransition
             enter={{
